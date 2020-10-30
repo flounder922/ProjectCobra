@@ -8,6 +8,7 @@ import ray.input.InputManager;
 import ray.input.action.Action;
 import ray.rage.Engine;
 import ray.rage.asset.texture.Texture;
+import ray.rage.asset.texture.TextureManager;
 import ray.rage.game.Game;
 import ray.rage.game.VariableFrameRateGame;
 import ray.rage.rendersystem.RenderSystem;
@@ -21,17 +22,22 @@ import ray.rage.rendersystem.states.TextureState;
 import ray.rage.scene.*;
 import ray.rage.scene.controllers.RotationController;
 import ray.rage.util.BufferUtil;
+import ray.rage.util.Configuration;
 import ray.rml.Radianf;
 import ray.rml.Vector3;
 import ray.rml.Vector3f;
 
 import java.awt.*;
+import java.awt.geom.AffineTransform;
 import java.io.IOException;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
 
 public class MyGame extends VariableFrameRateGame {
+
+    private static final String SKYBOX_NAME = "SkyBox";
+    private boolean skyBoxVisible = true;
 
     private GL4RenderSystem renderSystem; // render system for the game, is defined each update.
     private float elapsedTime = 0.0f;  // Used to keep track of how long the game has been running.
@@ -95,6 +101,45 @@ public class MyGame extends VariableFrameRateGame {
 
     @Override
     protected void setupScene(Engine engine, SceneManager sceneManager) throws IOException {
+
+        Configuration configuration = engine.getConfiguration();
+        TextureManager textureManager = engine.getTextureManager();
+
+        // Set up all six sides of the skybox with assets in the skybox folder
+        textureManager.setBaseDirectoryPath(configuration.valueOf("assets.skyboxes.path"));
+        Texture front = textureManager.getAssetByPath("front.jpeg");
+        Texture back = textureManager.getAssetByPath("back.jpeg");
+        Texture left = textureManager.getAssetByPath("left.jpeg");
+        Texture right = textureManager.getAssetByPath("right.jpeg");
+        Texture top = textureManager.getAssetByPath("top.jpeg");
+        Texture bottom = textureManager.getAssetByPath("bottom.jpeg");
+
+        // changing texture manager back to the texture path
+        textureManager.setBaseDirectoryPath(configuration.valueOf("assets.textures.path"));
+
+        // Creating the needed transform so the textures appear correctly in the skybox
+        AffineTransform affineTransform = new AffineTransform();
+        affineTransform.translate(0, front.getImage().getHeight());
+        affineTransform.scale(1d, -1d);
+
+        // Applying the transform created just before this
+        front.transform(affineTransform);
+        back.transform(affineTransform);
+        left.transform(affineTransform);
+        right.transform(affineTransform);
+        top.transform(affineTransform);
+        bottom.transform(affineTransform);
+
+        // Adding all the textures to the skybox
+        SkyBox skyBox = sceneManager.createSkyBox(SKYBOX_NAME);
+        skyBox.setTexture(front, SkyBox.Face.FRONT);
+        skyBox.setTexture(back, SkyBox.Face.BACK);
+        skyBox.setTexture(left, SkyBox.Face.LEFT);
+        skyBox.setTexture(right, SkyBox.Face.RIGHT);
+        skyBox.setTexture(top, SkyBox.Face.TOP);
+        skyBox.setTexture(bottom, SkyBox.Face.BOTTOM);
+        sceneManager.setActiveSkyBox(skyBox);
+
 
         //Creates the dolphin and sets the render. Followed by the node creation and placement of the node in the world.
         // The entity is then attached to the node.
