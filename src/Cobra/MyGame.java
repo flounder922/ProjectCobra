@@ -38,13 +38,13 @@ public class MyGame extends VariableFrameRateGame {
     private String displayStringPlayerOne; // Used to display the information on the HUD.
 
 
-    private boolean earthVisited = false;
-    private boolean redVisited = false;
-    private boolean moonVisited = false;
+//    private boolean earthVisited = false;
+//    private boolean redVisited = false;
+//    private boolean moonVisited = false;
 
 
     private InputManager inputManager;
-    private Camera3PController orbitController1, orbitController2;
+    private Camera3PController orbitController1;
     private Movement3PController movement3PController1;
     private RotationController solarSystemNodeController;
 
@@ -195,19 +195,19 @@ public class MyGame extends VariableFrameRateGame {
         inputManager = new GenericInputManager();
         ArrayList controllers = inputManager.getControllers();
 
-        Action moveForwardW = new ForwardThirdPersonAction(sceneManager.getSceneNode("DolphinNode"), orbitController2);
-        Action moveBackwardS = new BackwardThirdPersonAction(sceneManager.getSceneNode("DolphinNode"), orbitController2);
-        Action moveLeftA = new LeftThirdPersonAction(sceneManager.getSceneNode("DolphinNode"), orbitController2);
-        Action moveRightD = new RightThirdPersonAction(sceneManager.getSceneNode("DolphinNode"), orbitController2);
+        Action moveForwardW = new ForwardThirdPersonAction(sceneManager.getSceneNode("DolphinNode"), orbitController1);
+        Action moveBackwardS = new BackwardThirdPersonAction(sceneManager.getSceneNode("DolphinNode"), orbitController1);
+        Action moveLeftA = new LeftThirdPersonAction(sceneManager.getSceneNode("DolphinNode"), orbitController1);
+        Action moveRightD = new RightThirdPersonAction(sceneManager.getSceneNode("DolphinNode"), orbitController1);
 
-        Action increaseElevation = new ThirdPersonElevationIncrease(sceneManager.getSceneNode("DolphinNode"), orbitController2);
-        Action decreaseElevation = new ThirdPersonElevationDecrease(sceneManager.getSceneNode("DolphinNode"), orbitController2);
+        Action increaseElevation = new ThirdPersonElevationIncrease(sceneManager.getSceneNode("DolphinNode"), orbitController1);
+        Action decreaseElevation = new ThirdPersonElevationDecrease(sceneManager.getSceneNode("DolphinNode"), orbitController1);
 
-        Action orbitLeft = new ThirdPersonOrbitLeft(sceneManager.getSceneNode("DolphinNode"), orbitController2);
-        Action orbitRight = new ThirdPersonOrbitRight(sceneManager.getSceneNode("DolphinNode"), orbitController2);
+        Action orbitLeft = new ThirdPersonOrbitLeft(sceneManager.getSceneNode("DolphinNode"), orbitController1);
+        Action orbitRight = new ThirdPersonOrbitRight(sceneManager.getSceneNode("DolphinNode"), orbitController1);
 
-        Action radiasIncrease = new ThirdPersonRadiasIncrease(sceneManager.getSceneNode("DolphinNode"), orbitController2);
-        Action radiasDecrease = new ThirdPersonRadiasDecrease(sceneManager.getSceneNode("DolphinNode"), orbitController2);
+        Action radiasIncrease = new ThirdPersonRadiasIncrease(sceneManager.getSceneNode("DolphinNode"), orbitController1);
+        Action radiasDecrease = new ThirdPersonRadiasDecrease(sceneManager.getSceneNode("DolphinNode"), orbitController1);
 
         Action turnLeft = new TurnLeftThirdPersonAction(sceneManager.getSceneNode("DolphinNode"));
         Action turnRight = new TurnRightThirdPersonAction(sceneManager.getSceneNode("DolphinNode"));
@@ -323,11 +323,11 @@ public class MyGame extends VariableFrameRateGame {
         floor.setGpuShaderProgram(sceneManager.getRenderSystem().getGpuShaderProgram(GpuShaderProgram.Type.RENDERING));
 
         float[] vertices = new float[] {
-                1.0f,0.0f,1.0f,     -1.0f,0.0f,-1.0f,   1.0f,0.0f,-1.0f
-
+                0.0f,0.0f,0.0f,     1.0f,0.0f,0.0f,     1.0f,0.0f,1.0f,     0.0f,0.0f,1.0f
         };
 
         float [] textureCoordinates = new float[] {
+                0.0f,0.0f,      0.5f,1.0f,      1.0f,0.0f,
                 0.0f,0.0f,      0.5f,1.0f,      1.0f,0.0f
         };
 
@@ -335,7 +335,7 @@ public class MyGame extends VariableFrameRateGame {
                 0.0f,1.0f,0.0f,    0.0f,1.0f,0.0f,    0.0f,1.0f,0.0f
         };
 
-        int[] indices = new int[] {0,1,2};
+        int[] indices = new int[] {0,1,2,0,2,3};
 
         FloatBuffer verticesBuffer = BufferUtil.directFloatBuffer(vertices);
         FloatBuffer textureBuffer = BufferUtil.directFloatBuffer(textureCoordinates);
