@@ -44,10 +44,6 @@ public class MyGame extends VariableFrameRateGame {
     private String displayStringPlayerOne; // Used to display the information on the HUD.
 
 
-//    private boolean earthVisited = false;
-//    private boolean redVisited = false;
-//    private boolean moonVisited = false;
-
 
     private InputManager inputManager;
     private Camera3PController orbitController1;
@@ -80,9 +76,29 @@ public class MyGame extends VariableFrameRateGame {
         displayStringPlayerOne = "Player HUD";
 
         // Auto adjusting HUD
-        renderSystem.setHUD(displayStringPlayerOne, renderSystem.getRenderWindow().getViewport(0).getActualLeft(), renderSystem.getRenderWindow().getViewport(0).getActualBottom() + 5);
+        renderSystem.setHUD(displayStringPlayerOne, renderSystem.getRenderWindow().getViewport(0).getActualLeft(),
+                        renderSystem.getRenderWindow().getViewport(0).getActualBottom() + 5);
 
+
+        updateVerticalPosition();
         inputManager.update(elapsedTime);
+    }
+
+    protected void updateVerticalPosition() {
+        SceneNode avatarNode = this.getEngine().getSceneManager().getSceneNode("DolphinNode");
+
+        SceneNode tessellationNode = this.getEngine().getSceneManager().getSceneNode("TessellationNode");
+
+        Tessellation tessellationEntity = ((Tessellation) tessellationNode.getAttachedObject("tessellationEntity"));
+
+        Vector3 worldAvatarPosition = avatarNode.getWorldPosition();
+        Vector3 localAvatarPosition = avatarNode.getLocalPosition();
+
+        Vector3 newAvatarPosition = Vector3f.createFrom(localAvatarPosition.x(),
+                tessellationEntity.getWorldHeight(worldAvatarPosition.x(), worldAvatarPosition.z()),
+                localAvatarPosition.z());
+
+        avatarNode.setLocalPosition(newAvatarPosition);
     }
 
     @Override
@@ -196,6 +212,17 @@ public class MyGame extends VariableFrameRateGame {
         floor2Node.scale(100.0f, 100.0f, 100.0f);
 
          */
+
+        Tessellation tessellationEntity = sceneManager.createTessellation("tessellationEntity", 7);
+
+        tessellationEntity.setSubdivisions(8.0f);
+
+        SceneNode tessellationNode = sceneManager.getRootSceneNode().createChildSceneNode("TessellationNode");
+        tessellationNode.attachObject(tessellationEntity);
+
+        tessellationNode.scale(100, 200, 100);
+        tessellationEntity.setHeightMap(this.getEngine(), "terrain.jpg");
+        tessellationEntity.setTexture(this.getEngine(), "grass.jpg");
 
         // Gets the ambient light and sets its intensity for the scene.
         sceneManager.getAmbientLight().setIntensity(new Color(0.2f, 0.2f, 0.2f));
@@ -372,8 +399,7 @@ public class MyGame extends VariableFrameRateGame {
         };
 
         float [] textureCoordinates = new float[] {
-                0.0f,0.0f,      0.5f,1.0f,      1.0f,0.0f,
-                0.0f,0.0f,      0.5f,1.0f,      1.0f,0.0f
+                0.0f,0.0f,      0.5f,1.0f,      1.0f,0.0f,      0.5f,1.0f
         };
 
         float[] normals = new float[] {
