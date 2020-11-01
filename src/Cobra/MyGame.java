@@ -27,12 +27,19 @@ import ray.rml.Radianf;
 import ray.rml.Vector3;
 import ray.rml.Vector3f;
 
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineFactory;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
+import java.util.List;
 
 public class MyGame extends VariableFrameRateGame {
 
@@ -57,6 +64,7 @@ public class MyGame extends VariableFrameRateGame {
 
     public static void main(String[] args) {
         Game game = new MyGame();
+        
         try {
             game.startup();
             game.run();
@@ -66,6 +74,23 @@ public class MyGame extends VariableFrameRateGame {
             game.shutdown();
             game.exit();
         }
+    }
+
+    private void executeScript(ScriptEngine jsEngine, String scriptFileName) {
+        try {
+            FileReader fileReader = new FileReader(scriptFileName);
+            jsEngine.eval(fileReader);
+            fileReader.close();
+        }catch (FileNotFoundException e1) {
+            System.out.println(scriptFileName + " not found " + e1);
+        } catch (IOException e2) {
+            System.out.println("IO problem with " + scriptFileName + e2);
+        } catch (ScriptException e3) {
+            System.out.println("ScriptException in " + scriptFileName + e3);
+        } catch (NullPointerException e4) {
+            System.out.println ("Null ptr exception in " + scriptFileName + e4);
+        }
+
     }
 
     @Override
@@ -120,6 +145,11 @@ public class MyGame extends VariableFrameRateGame {
 
         Configuration configuration = engine.getConfiguration();
         TextureManager textureManager = engine.getTextureManager();
+
+        //ScriptEngineManager factory = new ScriptEngineManager();
+        //List<ScriptEngineFactory> list = factory.getEngineFactories();
+
+        //ScriptEngine jsEngine = factory.getEngineByName("js");
 
         // Set up all six sides of the skybox with assets in the skybox folder
         textureManager.setBaseDirectoryPath(configuration.valueOf("assets.skyboxes.path"));
