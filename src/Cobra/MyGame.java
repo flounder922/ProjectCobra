@@ -33,6 +33,7 @@ import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -104,7 +105,6 @@ public class MyGame extends VariableFrameRateGame {
         renderSystem.setHUD(displayStringPlayerOne, renderSystem.getRenderWindow().getViewport(0).getActualLeft(),
                         renderSystem.getRenderWindow().getViewport(0).getActualBottom() + 5);
 
-
         updateVerticalPosition();
         inputManager.update(elapsedTime);
     }
@@ -146,10 +146,16 @@ public class MyGame extends VariableFrameRateGame {
         Configuration configuration = engine.getConfiguration();
         TextureManager textureManager = engine.getTextureManager();
 
-        //ScriptEngineManager factory = new ScriptEngineManager();
-        //List<ScriptEngineFactory> list = factory.getEngineFactories();
+        ScriptEngineManager factory = new ScriptEngineManager();
 
-        //ScriptEngine jsEngine = factory.getEngineByName("js");
+        // Name of the script that is used
+        String scriptName = "hello.js";
+
+        // define the script language as being javascript
+        ScriptEngine jsEngine = factory.getEngineByName("js");
+
+        // Running the script.
+        this.executeScript(jsEngine, scriptName);
 
         // Set up all six sides of the skybox with assets in the skybox folder
         textureManager.setBaseDirectoryPath(configuration.valueOf("assets.skyboxes.path"));
@@ -462,6 +468,15 @@ public class MyGame extends VariableFrameRateGame {
         floor.setRenderState(faceState);
 
         return floor;
+    }
+
+    public void setIsConnected(boolean isConnected) {
+    }
+
+    public Vector3 getPlayerPosition() {
+        SceneNode avatarNode = getEngine().getSceneManager().getSceneNode("DolphinNode");
+
+        return avatarNode.getWorldPosition();
     }
 /*
     protected ManualObject floor2(Engine engine, SceneManager sceneManager) throws IOException {
