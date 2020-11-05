@@ -6,6 +6,7 @@ import net.java.games.input.Controller;
 import ray.input.GenericInputManager;
 import ray.input.InputManager;
 import ray.input.action.Action;
+import ray.networking.IGameConnection;
 import ray.rage.Engine;
 import ray.rage.asset.texture.Texture;
 import ray.rage.asset.texture.TextureManager;
@@ -26,6 +27,7 @@ import ray.rage.util.Configuration;
 import ray.rml.Radianf;
 import ray.rml.Vector3;
 import ray.rml.Vector3f;
+import sun.net.TransferProtocolClient;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
@@ -37,9 +39,11 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
 
 public class MyGame extends VariableFrameRateGame {
@@ -51,6 +55,14 @@ public class MyGame extends VariableFrameRateGame {
     private float elapsedTime = 0.0f;  // Used to keep track of how long the game has been running.
     private String displayStringPlayerOne; // Used to display the information on the HUD.
 
+    // Server connection variables
+    private String serverAddress;
+    private int serverPort;
+    private IGameConnection.ProtocolType serverProtocol;
+    private UDPClient protocolClient;
+    private boolean isClientConnected;
+    private Vector<UUID> gameObjectsToRemove;
+
 
 
     private InputManager inputManager;
@@ -58,12 +70,16 @@ public class MyGame extends VariableFrameRateGame {
     private Movement3PController movement3PController1;
     private RotationController solarSystemNodeController;
 
-
+    // String serverAddress, int serverPort
     public MyGame() {
         super();
+        //this.serverAddress = serverAddress;
+       // this.serverPort = serverPort;
+        //this.serverProtocol = IGameConnection.ProtocolType.UDP;
     }
 
     public static void main(String[] args) {
+        //args[0], Integer.parseInt(args[1])
         Game game = new MyGame();
         
         try {
@@ -107,6 +123,7 @@ public class MyGame extends VariableFrameRateGame {
 
         updateVerticalPosition();
         inputManager.update(elapsedTime);
+       // processNetworking(elapsedTime);
     }
 
     protected void updateVerticalPosition() {
@@ -124,6 +141,19 @@ public class MyGame extends VariableFrameRateGame {
                 localAvatarPosition.z());
 
         avatarNode.setLocalPosition(newAvatarPosition);
+    }
+
+    protected void processNetworking(float elapsedTime) {
+        // Process packets received by the client from the server
+        if (protocolClient != null)
+            protocolClient.processPackets();
+        // remove ghost avatars for players who have left the game
+        Iterator<UUID> iterator = gameObjectsToRemove.iterator();
+
+        while(iterator.hasNext()) {
+            getEngine().getSceneManager().destroySceneNode(iterator.next().toString());
+        }
+        gameObjectsToRemove.clear();
     }
 
     @Override
@@ -238,16 +268,6 @@ public class MyGame extends VariableFrameRateGame {
         floorNode.roll(Radianf.createFrom((float) Math.toRadians(180)));
         floorNode.scale(100.0f, 100.0f, 100.0f);
 
-        // Create the second floor manual object, move it into place, and scale it to size.
-        /*
-        ManualObject floor2 = floor2(engine, sceneManager);
-        SceneNode floor2Node = sceneManager.getRootSceneNode().createChildSceneNode("floor2Node");
-        floor2Node.attachObject(floor2);
-        floor2Node.roll(Radianf.createFrom((float) Math.toRadians(180)));
-        floor2Node.rotate(Radianf.createFrom((float) Math.toRadians(180)), Vector3f.createFrom(0.0f,1.0f,0.0f));
-        floor2Node.scale(100.0f, 100.0f, 100.0f);
-
-         */
 
         Tessellation tessellationEntity = sceneManager.createTessellation("tessellationEntity", 7);
 
@@ -256,9 +276,14 @@ public class MyGame extends VariableFrameRateGame {
         SceneNode tessellationNode = sceneManager.getRootSceneNode().createChildSceneNode("TessellationNode");
         tessellationNode.attachObject(tessellationEntity);
 
-        tessellationNode.scale(100, 200, 100);
+
+        tessellationNode.scale(100, 100, 100);
         tessellationEntity.setHeightMap(this.getEngine(), "terrain.jpg");
         tessellationEntity.setTexture(this.getEngine(), "grass.jpg");
+        tessellationEntity.setTextureTiling(75);
+        tessellationEntity.getTextureState().setWrapMode(TextureState.WrapMode.REPEAT);
+
+
 
         // Gets the ambient light and sets its intensity for the scene.
         sceneManager.getAmbientLight().setIntensity(new Color(0.2f, 0.2f, 0.2f));
@@ -350,6 +375,25 @@ public class MyGame extends VariableFrameRateGame {
                 orbitController1.setupInput(inputManager, c.getName());
                 movement3PController1.setupInput(inputManager, c.getName());
             }
+        }
+    }
+
+    private void setupNetworking() {
+        gameObjectsToRemove = new Vector<UUID>();
+        isClientConnected = false;
+
+        try {
+            protocolClient = new UDPClient(InetAddress.getByName(serverAddress), serverPort, serverProtocol, this);
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        if (protocolClient == null) {
+            System.out.println("Missing protocol host");
+        } else {
+            protocolClient.sendJoinMessage();
         }
     }
 
@@ -478,6 +522,9 @@ public class MyGame extends VariableFrameRateGame {
 
         return avatarNode.getWorldPosition();
     }
+
+    
+
 /*
     protected ManualObject floor2(Engine engine, SceneManager sceneManager) throws IOException {
 

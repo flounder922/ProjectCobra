@@ -33,7 +33,7 @@ public class UDPClient extends GameConnectionClient {
 
         if (messageTokens.length > 0) {
 
-            // Receive “join”
+            // Receive join
             // Format: join, success/failure
             if (messageTokens[0].compareTo("join") == 0)
             {
@@ -45,12 +45,12 @@ public class UDPClient extends GameConnectionClient {
                     game.setIsConnected(false);
                 }
             }
-            if (messageTokens[0].compareTo("bye") == 0) // receive “bye”
+            if (messageTokens[0].compareTo("bye") == 0) // receive bye
             { // format: bye, remoteId
                 UUID ghostID = UUID.fromString(messageTokens[1]);
                 removeGhostAvatar(ghostID);
             }
-            if ((messageTokens[0].compareTo("dsfr") == 0) // receive “dsfr”
+            if ((messageTokens[0].compareTo("dsfr") == 0) // receive dsfr
                     || (messageTokens[0].compareTo("create") == 0)) { // format: create, remoteId, x,y,z or dsfr, remoteId, x,y,z
                 UUID ghostID = UUID.fromString(messageTokens[1]);
                 Vector3 ghostPosition = Vector3f.createFrom(
@@ -63,11 +63,11 @@ public class UDPClient extends GameConnectionClient {
                     System.out.println("error creating ghost avatar");
                 }
             }
-            if (messageTokens[0].compareTo("wsds") == 0) // rec. “create…”
+            if (messageTokens[0].compareTo("wsds") == 0) // rec. create…
             { // etc….. }
-                if (messageTokens[0].compareTo("wsds") == 0) // rec. “wants…”
+                if (messageTokens[0].compareTo("wsds") == 0) // rec. wants…
                 { // etc….. }
-                    if (messageTokens[0].compareTo("move") == 0) // rec. “move...”
+                    if (messageTokens[0].compareTo("move") == 0) // rec. move...
                     { // etc….. }
                     }
                 }
