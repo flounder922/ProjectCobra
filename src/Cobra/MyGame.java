@@ -1,5 +1,6 @@
 package Cobra;
 
+import myGameEngine.ServerDisconnectAction;
 import myGameEngine.ThirdPersonCamera.*;
 import net.java.games.input.Component;
 import net.java.games.input.Controller;
@@ -27,15 +28,12 @@ import ray.rage.util.Configuration;
 import ray.rml.Radianf;
 import ray.rml.Vector3;
 import ray.rml.Vector3f;
-import sun.net.TransferProtocolClient;
 
 import javax.script.ScriptEngine;
-import javax.script.ScriptEngineFactory;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -44,7 +42,6 @@ import java.net.UnknownHostException;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.*;
-import java.util.List;
 
 public class MyGame extends VariableFrameRateGame {
 
@@ -59,7 +56,7 @@ public class MyGame extends VariableFrameRateGame {
     private String serverAddress;
     private int serverPort;
     private IGameConnection.ProtocolType serverProtocol;
-    private UDPClient protocolClient;
+    private ProtocolClient protocolClient;
     private boolean isClientConnected;
     private Vector<UUID> gameObjectsToRemove;
 
@@ -70,17 +67,16 @@ public class MyGame extends VariableFrameRateGame {
     private Movement3PController movement3PController1;
     private RotationController solarSystemNodeController;
 
-    // String serverAddress, int serverPort
-    public MyGame() {
+
+    public MyGame(String serverAddress, int serverPort) {
         super();
-        //this.serverAddress = serverAddress;
-       // this.serverPort = serverPort;
-        //this.serverProtocol = IGameConnection.ProtocolType.UDP;
+        this.serverAddress = serverAddress;
+        this.serverPort = serverPort;
+        this.serverProtocol = IGameConnection.ProtocolType.UDP;
     }
 
     public static void main(String[] args) {
-        //args[0], Integer.parseInt(args[1])
-        Game game = new MyGame();
+        Game game = new MyGame(args[0], Integer.parseInt(args[1]));
         
         try {
             game.startup();
@@ -123,7 +119,11 @@ public class MyGame extends VariableFrameRateGame {
 
         updateVerticalPosition();
         inputManager.update(elapsedTime);
-       // processNetworking(elapsedTime);
+        processNetworking(elapsedTime);
+
+        if (isClientConnected)
+            protocolClient.sendMoveMessage(getPlayerPosition());
+
     }
 
     protected void updateVerticalPosition() {
@@ -300,11 +300,13 @@ public class MyGame extends VariableFrameRateGame {
         positionalLightNode.attachObject(positionalLight);
         dolphinNode.attachChild(positionalLightNode);
 
+        setupNetworking();
         setupInputs(sceneManager); // Setup the inputs
 
         solarSystemNodeController = new RotationController(Vector3f.createUnitVectorY(), 0.000006f);
 
         sceneManager.addController(solarSystemNodeController);
+
     }
 
     @Override
@@ -345,6 +347,8 @@ public class MyGame extends VariableFrameRateGame {
         Action turnLeft = new TurnLeftThirdPersonAction(sceneManager.getSceneNode("DolphinNode"));
         Action turnRight = new TurnRightThirdPersonAction(sceneManager.getSceneNode("DolphinNode"));
 
+        Action disconnect = new ServerDisconnectAction(protocolClient);
+
 
 
         for (Object controller : controllers) {
@@ -371,6 +375,9 @@ public class MyGame extends VariableFrameRateGame {
                 inputManager.associateAction(c, Component.Identifier.Key.Z, radiasIncrease, InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
                 inputManager.associateAction(c, Component.Identifier.Key.X, radiasDecrease, InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
 
+                // Other
+                inputManager.associateAction(c, Component.Identifier.Key.B, disconnect, InputManager.INPUT_ACTION_TYPE.ON_PRESS_ONLY);
+
             } else if (c.getType() == Controller.Type.GAMEPAD || c.getType() == Controller.Type.STICK) {
                 orbitController1.setupInput(inputManager, c.getName());
                 movement3PController1.setupInput(inputManager, c.getName());
@@ -383,7 +390,7 @@ public class MyGame extends VariableFrameRateGame {
         isClientConnected = false;
 
         try {
-            protocolClient = new UDPClient(InetAddress.getByName(serverAddress), serverPort, serverProtocol, this);
+            protocolClient = new ProtocolClient(InetAddress.getByName(serverAddress), serverPort, serverProtocol, this);
         } catch (UnknownHostException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -515,12 +522,16 @@ public class MyGame extends VariableFrameRateGame {
     }
 
     public void setIsConnected(boolean isConnected) {
+        this.isClientConnected = isConnected;
     }
 
     public Vector3 getPlayerPosition() {
         SceneNode avatarNode = getEngine().getSceneManager().getSceneNode("DolphinNode");
-
         return avatarNode.getWorldPosition();
+    }
+
+    public boolean isConnected() {
+        return isClientConnected;
     }
 
     
