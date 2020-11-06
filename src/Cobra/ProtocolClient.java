@@ -3,7 +3,6 @@ package Cobra;
 import ray.networking.client.GameConnectionClient;
 import ray.rage.rendersystem.Renderable;
 import ray.rage.scene.Entity;
-import ray.rage.scene.SceneManager;
 import ray.rage.scene.SceneNode;
 import ray.rml.Vector3;
 import ray.rml.Vector3f;

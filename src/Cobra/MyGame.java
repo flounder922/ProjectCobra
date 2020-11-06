@@ -533,58 +533,5 @@ public class MyGame extends VariableFrameRateGame {
     public boolean isConnected() {
         return isClientConnected;
     }
-
-    
-
-/*
-    protected ManualObject floor2(Engine engine, SceneManager sceneManager) throws IOException {
-
-        ManualObject floor2 = sceneManager.createManualObject("floor2");
-        ManualObjectSection floorSection  = floor2.createManualSection("floor2Section");
-
-        floor2.setGpuShaderProgram(sceneManager.getRenderSystem().getGpuShaderProgram(GpuShaderProgram.Type.RENDERING));
-
-        float[] vertices = new float[] {
-                1.0f,0.0f,1.0f,     -1.0f,0.0f,-1.0f,   1.0f,0.0f,-1.0f
-
-        };
-
-        float [] textureCoordinates = new float[] {
-                0.0f,0.0f,      0.5f,1.0f,      1.0f,0.0f
-        };
-
-        float[] normals = new float[] {
-                0.0f,1.0f,0.0f,    0.0f,1.0f,0.0f,    0.0f,1.0f,0.0f
-        };
-
-        int[] indices = new int[] {0,1,2};
-
-        FloatBuffer verticesBuffer = BufferUtil.directFloatBuffer(vertices);
-        FloatBuffer textureBuffer = BufferUtil.directFloatBuffer(textureCoordinates);
-        FloatBuffer normalsBuffer = BufferUtil.directFloatBuffer(normals);
-        IntBuffer indexBuffer = BufferUtil.directIntBuffer(indices);
-
-        floorSection.setVertexBuffer(verticesBuffer);
-        floorSection.setTextureCoordsBuffer(textureBuffer);
-        floorSection.setNormalsBuffer(normalsBuffer);
-        floorSection.setIndexBuffer(indexBuffer);
-
-        Texture texture = engine.getTextureManager().getAssetByPath("blue.jpeg");
-        TextureState textureState = (TextureState)
-                sceneManager.getRenderSystem().createRenderState(RenderState.Type.TEXTURE);
-
-        textureState.setTexture(texture);
-
-        FrontFaceState faceState =  (FrontFaceState)
-                sceneManager.getRenderSystem().createRenderState(RenderState.Type.FRONT_FACE);
-
-        floor2.setDataSource(Renderable.DataSource.INDEX_BUFFER);
-        floor2.setRenderState(textureState);
-        floor2.setRenderState(faceState);
-
-        return floor2;
-    }
-
- */
 }
 

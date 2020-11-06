@@ -1,6 +1,5 @@
 package myGameEngine;
 
-import Cobra.MyGame;
 import Cobra.ProtocolClient;
 import net.java.games.input.Event;
 import ray.input.action.AbstractInputAction;
