@@ -8,6 +8,9 @@ import ray.input.GenericInputManager;
 import ray.input.InputManager;
 import ray.input.action.Action;
 import ray.networking.IGameConnection;
+import ray.physics.PhysicsEngine;
+import ray.physics.PhysicsEngineFactory;
+import ray.physics.PhysicsObject;
 import ray.rage.Engine;
 import ray.rage.asset.texture.Texture;
 import ray.rage.asset.texture.TextureManager;
@@ -25,9 +28,7 @@ import ray.rage.scene.*;
 import ray.rage.scene.controllers.RotationController;
 import ray.rage.util.BufferUtil;
 import ray.rage.util.Configuration;
-import ray.rml.Radianf;
-import ray.rml.Vector3;
-import ray.rml.Vector3f;
+import ray.rml.*;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
@@ -68,6 +69,14 @@ public class MyGame extends VariableFrameRateGame {
     // Skybox variables
     private static final String SKYBOX_NAME = "SkyBox";
     private boolean skyBoxVisible = true;
+
+    // Physics related variables
+    private final static String GROUND_E = "Ground";
+    private final static String GROUND_N = "GroundNode";
+
+    private PhysicsEngine physicsEngine;
+    private PhysicsObject playerAvatarPhysicsObject, groundPlanePhysicsObject;
+
 
 
     public MyGame(String serverAddress, int serverPort) {
@@ -113,13 +122,25 @@ public class MyGame extends VariableFrameRateGame {
         renderSystem = (GL4RenderSystem) engine.getRenderSystem();
         elapsedTime += engine.getElapsedTimeMillis();
 
+        Matrix4 matrix;
+        physicsEngine.update(engine.getElapsedTimeMillis());
+
+        for (SceneNode s : engine.getSceneManager().getSceneNodes()) {
+            if (s.getPhysicsObject() != null) {
+                matrix = Matrix4f.createFrom(toFloatArray(s.getPhysicsObject().getTransform()));
+                s.setLocalPosition(matrix.value(0, 3), matrix.value(1, 3), matrix.value(2, 3));
+            }
+        }
+
+
         displayStringPlayerOne = "Player HUD";
 
         // Auto adjusting HUD
         renderSystem.setHUD(displayStringPlayerOne, renderSystem.getRenderWindow().getViewport(0).getActualLeft(),
                         renderSystem.getRenderWindow().getViewport(0).getActualBottom() + 5);
 
-        updateVerticalPosition();
+        //updateVerticalPosition();
+        orbitController1.updateCameraPosition();
         inputManager.update(elapsedTime);
         processNetworking(elapsedTime);
 
@@ -128,12 +149,13 @@ public class MyGame extends VariableFrameRateGame {
 
     }
 
+
     protected void updateVerticalPosition() {
         SceneNode avatarNode = this.getEngine().getSceneManager().getSceneNode("DolphinNode");
 
         SceneNode tessellationNode = this.getEngine().getSceneManager().getSceneNode("TessellationNode");
 
-        Tessellation tessellationEntity = ((Tessellation) tessellationNode.getAttachedObject("tessellationEntity"));
+        Tessellation tessellationEntity = ((Tessellation) tessellationNode.getAttachedObject("TessellationEntity"));
 
         Vector3 worldAvatarPosition = avatarNode.getWorldPosition();
         Vector3 localAvatarPosition = avatarNode.getLocalPosition();
@@ -228,7 +250,7 @@ public class MyGame extends VariableFrameRateGame {
         //Creates the dolphin and sets the render. Followed by the node creation and placement of the node in the world.
         // The entity is then attached to the node.
         SceneNode dolphinNode = createSceneNode(sceneManager,
-                "DolphinNode", "dolphinHighPoly.obj", Vector3f.createFrom(-1.0f, 0.31f, 0.0f));
+                "DolphinNode", "dolphinHighPoly.obj", Vector3f.createFrom(0.0f, 5.0f, 0.0f));
 
 
         // Sets up the camera
@@ -244,15 +266,18 @@ public class MyGame extends VariableFrameRateGame {
 
 
         // Creating the terrain
-        Tessellation tessellationEntity = sceneManager.createTessellation("tessellationEntity", 7);
-        tessellationEntity.setSubdivisions(8.0f);
+        Tessellation tessellationEntity = sceneManager.createTessellation("TessellationEntity", 7);
+        tessellationEntity.setSubdivisions(2.0f);
+        tessellationEntity.setQuality(7);
+        tessellationEntity.setHeightMapTiling(5);
 
         // Creates the node for the terrain
         SceneNode tessellationNode = sceneManager.getRootSceneNode().createChildSceneNode("TessellationNode");
         tessellationNode.attachObject(tessellationEntity);
 
         // Sets the scale of the terrain
-        tessellationNode.scale(100, 100, 100);
+        //tessellationNode.scale(100, 50, 100);
+        tessellationNode.setLocalPosition(0.0f, 0.0f, 0.0f);
 
         // Sets the terrain height map
         tessellationEntity.setHeightMap(this.getEngine(), "terrain.jpg");
@@ -264,12 +289,12 @@ public class MyGame extends VariableFrameRateGame {
 
 
         // Gets the ambient light and sets its intensity for the scene.
-        sceneManager.getAmbientLight().setIntensity(new Color(0.5f, 0.5f, 0.5f));
+        sceneManager.getAmbientLight().setIntensity(new Color(0.6f, 0.6f, 0.6f));
 
 
         // Create a spot light
         Light positionalLight = sceneManager.createLight("PositionalLight", Light.Type.SPOT);
-        positionalLight.setAmbient(new Color(0.1f, 0.1f, 0.1f));
+        positionalLight.setAmbient(new Color(0.3f, 0.3f, 0.3f));
         positionalLight.setDiffuse(new Color(0.7f, 0.7f, 0.7f));
         positionalLight.setSpecular(new Color(1.0f, 1.0f, 1.0f));
         positionalLight.setRange(10f);
@@ -279,6 +304,11 @@ public class MyGame extends VariableFrameRateGame {
                 sceneManager.getRootSceneNode().createChildSceneNode(positionalLight.getName() + "Node");
         positionalLightNode.attachObject(positionalLight);
         dolphinNode.attachChild(positionalLightNode);
+
+
+        // Setup the physics
+        initializePhysicsSystem();
+        createRagePhysicsWorld(engine);
 
 
         // Setup the inputs
@@ -382,6 +412,68 @@ public class MyGame extends VariableFrameRateGame {
         } else {
             protocolClient.sendJoinMessage();
         }
+    }
+
+    private void initializePhysicsSystem() {
+        String engine = "ray.physics.JBullet.JBulletPhysicsEngine";
+        float[] gravity = {0, -1.0f, 0};
+
+        physicsEngine = PhysicsEngineFactory.createPhysicsEngine(engine);
+        physicsEngine.initSystem();
+        physicsEngine.setGravity(gravity);
+    }
+
+    private void createRagePhysicsWorld(Engine engine) {
+        float mass = 1.0f;
+        float up[] = {0, 1, 0};
+        double[] tempVariable;
+
+        SceneNode playerAvatarNode = engine.getSceneManager().getSceneNode("DolphinNode");
+        SceneNode groundPlaneNode = engine.getSceneManager().getSceneNode("TessellationNode");
+
+
+        // Holds the transform for the player avatar
+        tempVariable = toDouble(playerAvatarNode.getLocalTransform().toFloatArray());
+        playerAvatarPhysicsObject = physicsEngine.addCapsuleObject(
+                physicsEngine.nextUID(), mass, tempVariable, 0.5f, 1.0f);
+
+        playerAvatarPhysicsObject.setBounciness(1.0f);
+        playerAvatarNode.setPhysicsObject(playerAvatarPhysicsObject);
+
+        // Now holds the transform for the ground plane node
+        tempVariable = toDouble(groundPlaneNode.getLocalTransform().toFloatArray());
+        groundPlanePhysicsObject = physicsEngine.addStaticPlaneObject(
+                physicsEngine.nextUID(), tempVariable, up, 0.0f);
+
+        groundPlanePhysicsObject.setBounciness(0.2f);
+        groundPlaneNode.scale(100.0f, 45.0f, 100.0f);
+        groundPlaneNode.setPhysicsObject(groundPlanePhysicsObject);
+    }
+
+    private double[] toDouble(float[] floatArray) {
+        if (floatArray == null)
+            return null;
+
+        int n = floatArray.length;
+        double[] ret = new double[n];
+
+        for (int i = 0; i < n; i++) {
+            ret[i] = (double)floatArray[i];
+        }
+        return ret;
+    }
+
+    private float[] toFloatArray(double[] doubleArray) {
+        if (doubleArray == null)
+            return null;
+
+        int n = doubleArray.length;
+        float[] ret = new float[n];
+
+        for (int i = 0; i < n; i++) {
+            ret[i] = (float)doubleArray[i];
+        }
+        return ret;
     }
 
     protected SceneNode createSceneNode(SceneManager sceneManager, String nameOfNode,
