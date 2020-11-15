@@ -45,9 +45,7 @@ import java.util.*;
 
 public class MyGame extends VariableFrameRateGame {
 
-    private static final String SKYBOX_NAME = "SkyBox";
-    private boolean skyBoxVisible = true;
-
+    // Render system and HUD variables
     private GL4RenderSystem renderSystem; // render system for the game, is defined each update.
     private float elapsedTime = 0.0f;  // Used to keep track of how long the game has been running.
     private String displayStringPlayerOne; // Used to display the information on the HUD.
@@ -60,12 +58,16 @@ public class MyGame extends VariableFrameRateGame {
     private boolean isClientConnected;
     private Vector<UUID> gameObjectsToRemove;
 
-
-
+    // Input manager variable
     private InputManager inputManager;
+
+    // Variables for camera controller and movement of player avatar
     private Camera3PController orbitController1;
     private Movement3PController movement3PController1;
-    private RotationController solarSystemNodeController;
+
+    // Skybox variables
+    private static final String SKYBOX_NAME = "SkyBox";
+    private boolean skyBoxVisible = true;
 
 
     public MyGame(String serverAddress, int serverPort) {
@@ -229,31 +231,10 @@ public class MyGame extends VariableFrameRateGame {
                 "DolphinNode", "dolphinHighPoly.obj", Vector3f.createFrom(-1.0f, 0.31f, 0.0f));
 
 
+        // Sets up the camera
         setupOrbitCamera(engine, sceneManager);
         setupMovement(sceneManager);
 
-        // Creates planet 1 and sets the render. Followed by the node creation and placement of the node in the world.
-        // The entity is then attached to the node.
-        SceneNode earthNode = createSceneNode(sceneManager,
-                "EarthNode", "earth.obj", Vector3f.createFrom(-50.0f, 3.0f, -8.0f));
-        earthNode.setLocalScale(1.5f, 1.5f, 1.5f);
-
-        // Creates planet 2 and sets the render. Followed by the node creation and placement of the node in the world.
-        // The entity is then attached to the node.
-        SceneNode moonNode = createSceneNode(sceneManager,
-                "MoonNode", "planet2.obj", Vector3f.createFrom(25.0f, 1.0f, 14.0f));
-        moonNode.scale(1.0f, 1.0f, 1.0f);
-
-        // Creates planet 3 and sets the render. Followed by the node creation and placement of the node in the world.
-        // The entity is then attached to the node.
-        SceneNode redPlanetNode = createSceneNode(sceneManager,
-                "RedPlanetNode","planet3.obj", Vector3f.createFrom(3.0f, 2.0f, -30.0f));
-        redPlanetNode.scale(2.0f, 2.0f, 2.0f);
-
-        SceneNode solarSystemNode = sceneManager.getRootSceneNode().createChildSceneNode("SolarSystemNode");
-        solarSystemNode.attachChild(earthNode);
-        solarSystemNode.attachChild(redPlanetNode);
-        solarSystemNode.attachChild(moonNode);
 
         // Create a pyramid ship manual object
         ManualObject pyramidShip = pyramidShip(engine, sceneManager);
@@ -261,32 +242,30 @@ public class MyGame extends VariableFrameRateGame {
         pyramidShipNode.attachObject(pyramidShip);
         pyramidShipNode.setLocalPosition(5.0f, 7.0f, 8.0f);
 
-        // Create a floor manual object, move it into place, and scale it to size
-        ManualObject floor = floor(engine, sceneManager);
-        SceneNode floorNode = sceneManager.getRootSceneNode().createChildSceneNode("floorNode");
-        floorNode.attachObject(floor);
-        floorNode.roll(Radianf.createFrom((float) Math.toRadians(180)));
-        floorNode.scale(100.0f, 100.0f, 100.0f);
 
-
+        // Creating the terrain
         Tessellation tessellationEntity = sceneManager.createTessellation("tessellationEntity", 7);
-
         tessellationEntity.setSubdivisions(8.0f);
 
+        // Creates the node for the terrain
         SceneNode tessellationNode = sceneManager.getRootSceneNode().createChildSceneNode("TessellationNode");
         tessellationNode.attachObject(tessellationEntity);
 
-
+        // Sets the scale of the terrain
         tessellationNode.scale(100, 100, 100);
+
+        // Sets the terrain height map
         tessellationEntity.setHeightMap(this.getEngine(), "terrain.jpg");
+
+        // Sets the terrain texture and sets the tiling
         tessellationEntity.setTexture(this.getEngine(), "grass.jpg");
         tessellationEntity.setTextureTiling(75);
         tessellationEntity.getTextureState().setWrapMode(TextureState.WrapMode.REPEAT);
 
 
-
         // Gets the ambient light and sets its intensity for the scene.
-        sceneManager.getAmbientLight().setIntensity(new Color(0.2f, 0.2f, 0.2f));
+        sceneManager.getAmbientLight().setIntensity(new Color(0.5f, 0.5f, 0.5f));
+
 
         // Create a spot light
         Light positionalLight = sceneManager.createLight("PositionalLight", Light.Type.SPOT);
@@ -296,17 +275,18 @@ public class MyGame extends VariableFrameRateGame {
         positionalLight.setRange(10f);
 
         // Create the node for the light and attaches it to the dolphin node as a child.
-        SceneNode positionalLightNode = sceneManager.getRootSceneNode().createChildSceneNode(positionalLight.getName() + "Node");
+        SceneNode positionalLightNode =
+                sceneManager.getRootSceneNode().createChildSceneNode(positionalLight.getName() + "Node");
         positionalLightNode.attachObject(positionalLight);
         dolphinNode.attachChild(positionalLightNode);
 
+
+        // Setup the inputs
+        setupInputs(sceneManager);
+
+
+        // Setup the networking
         setupNetworking();
-        setupInputs(sceneManager); // Setup the inputs
-
-        solarSystemNodeController = new RotationController(Vector3f.createUnitVectorY(), 0.000006f);
-
-        sceneManager.addController(solarSystemNodeController);
-
     }
 
     @Override
@@ -350,7 +330,6 @@ public class MyGame extends VariableFrameRateGame {
         Action disconnect = new ServerDisconnectAction(protocolClient);
 
 
-
         for (Object controller : controllers) {
             Controller c = (Controller) controller;
 
@@ -386,6 +365,7 @@ public class MyGame extends VariableFrameRateGame {
     }
 
     private void setupNetworking() {
+
         gameObjectsToRemove = new Vector<UUID>();
         isClientConnected = false;
 
@@ -472,53 +452,6 @@ public class MyGame extends VariableFrameRateGame {
         pyramidShip.setRenderState(faceState);
 
         return pyramidShip;
-    }
-
-    protected ManualObject floor(Engine engine, SceneManager sceneManager) throws IOException {
-
-        ManualObject floor = sceneManager.createManualObject("floor");
-        ManualObjectSection floorSection  = floor.createManualSection("floorSection");
-
-        floor.setGpuShaderProgram(sceneManager.getRenderSystem().getGpuShaderProgram(GpuShaderProgram.Type.RENDERING));
-
-        float[] vertices = new float[] {
-                0.0f,0.0f,0.0f,     1.0f,0.0f,0.0f,     1.0f,0.0f,1.0f,     0.0f,0.0f,1.0f
-        };
-
-        float [] textureCoordinates = new float[] {
-                0.0f,0.0f,      0.5f,1.0f,      1.0f,0.0f,      0.5f,1.0f
-        };
-
-        float[] normals = new float[] {
-                0.0f,1.0f,0.0f,    0.0f,1.0f,0.0f,    0.0f,1.0f,0.0f
-        };
-
-        int[] indices = new int[] {0,1,2,0,2,3};
-
-        FloatBuffer verticesBuffer = BufferUtil.directFloatBuffer(vertices);
-        FloatBuffer textureBuffer = BufferUtil.directFloatBuffer(textureCoordinates);
-        FloatBuffer normalsBuffer = BufferUtil.directFloatBuffer(normals);
-        IntBuffer indexBuffer = BufferUtil.directIntBuffer(indices);
-
-        floorSection.setVertexBuffer(verticesBuffer);
-        floorSection.setTextureCoordsBuffer(textureBuffer);
-        floorSection.setNormalsBuffer(normalsBuffer);
-        floorSection.setIndexBuffer(indexBuffer);
-
-        Texture texture = engine.getTextureManager().getAssetByPath("blue.jpeg");
-        TextureState textureState = (TextureState)
-                sceneManager.getRenderSystem().createRenderState(RenderState.Type.TEXTURE);
-
-        textureState.setTexture(texture);
-
-        FrontFaceState faceState =  (FrontFaceState)
-                sceneManager.getRenderSystem().createRenderState(RenderState.Type.FRONT_FACE);
-
-        floor.setDataSource(Renderable.DataSource.INDEX_BUFFER);
-        floor.setRenderState(textureState);
-        floor.setRenderState(faceState);
-
-        return floor;
     }
 
     public void setIsConnected(boolean isConnected) {
