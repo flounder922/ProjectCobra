@@ -18,9 +18,10 @@ public class TurnLeftThirdPersonAction extends AbstractInputAction {
 
     @Override
     public void performAction(float v, Event event) {
-        Vector3f worldUp = (Vector3f) Vector3f.createFrom(0.0f, 1.0f, 0.0f);
-        Matrix3 matrixRotation = Matrix3f.createRotationFrom(Degreef.createFrom(1.0f), worldUp);
-        actorNode.setLocalRotation(matrixRotation.mult(actorNode.getWorldRotation()));
+        actorNode.getPhysicsObject().applyTorque(0, 50, 0);
+        //Vector3f worldUp = (Vector3f) Vector3f.createFrom(0.0f, 1.0f, 0.0f);
+        //Matrix3 matrixRotation = Matrix3f.createRotationFrom(Degreef.createFrom(1.0f), worldUp);
+        //actorNode.setLocalRotation(matrixRotation.mult(actorNode.getWorldRotation()));
 
     }
 }

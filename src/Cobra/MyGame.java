@@ -25,7 +25,6 @@ import ray.rage.rendersystem.states.FrontFaceState;
 import ray.rage.rendersystem.states.RenderState;
 import ray.rage.rendersystem.states.TextureState;
 import ray.rage.scene.*;
-import ray.rage.scene.controllers.RotationController;
 import ray.rage.util.BufferUtil;
 import ray.rage.util.Configuration;
 import ray.rml.*;
@@ -68,15 +67,10 @@ public class MyGame extends VariableFrameRateGame {
 
     // Skybox variables
     private static final String SKYBOX_NAME = "SkyBox";
-    private boolean skyBoxVisible = true;
 
     // Physics related variables
-    private final static String GROUND_E = "Ground";
-    private final static String GROUND_N = "GroundNode";
-
     private PhysicsEngine physicsEngine;
     private PhysicsObject playerAvatarPhysicsObject, groundPlanePhysicsObject;
-
 
 
     public MyGame(String serverAddress, int serverPort) {
@@ -250,7 +244,7 @@ public class MyGame extends VariableFrameRateGame {
         //Creates the dolphin and sets the render. Followed by the node creation and placement of the node in the world.
         // The entity is then attached to the node.
         SceneNode dolphinNode = createSceneNode(sceneManager,
-                "DolphinNode", "dolphinHighPoly.obj", Vector3f.createFrom(0.0f, 5.0f, 0.0f));
+                "DolphinNode", "dolphinHighPoly.obj", Vector3f.createFrom(-1.0f, 5.0f, -1.0f));
 
 
         // Sets up the camera
@@ -416,7 +410,7 @@ public class MyGame extends VariableFrameRateGame {
 
     private void initializePhysicsSystem() {
         String engine = "ray.physics.JBullet.JBulletPhysicsEngine";
-        float[] gravity = {0, -1.0f, 0};
+        float[] gravity = {0, -3.0f, 0};
 
         physicsEngine = PhysicsEngineFactory.createPhysicsEngine(engine);
         physicsEngine.initSystem();
@@ -437,7 +431,10 @@ public class MyGame extends VariableFrameRateGame {
         playerAvatarPhysicsObject = physicsEngine.addCapsuleObject(
                 physicsEngine.nextUID(), mass, tempVariable, 0.5f, 1.0f);
 
-        playerAvatarPhysicsObject.setBounciness(1.0f);
+        playerAvatarPhysicsObject.setBounciness(0.0f);
+        playerAvatarPhysicsObject.setFriction(0.5f);
+        playerAvatarPhysicsObject.setSleepThresholds(0.8f, 0.5f);
+        playerAvatarPhysicsObject.setDamping(0.79f, 0.5f);
         playerAvatarNode.setPhysicsObject(playerAvatarPhysicsObject);
 
         // Now holds the transform for the ground plane node
@@ -445,8 +442,9 @@ public class MyGame extends VariableFrameRateGame {
         groundPlanePhysicsObject = physicsEngine.addStaticPlaneObject(
                 physicsEngine.nextUID(), tempVariable, up, 0.0f);
 
-        groundPlanePhysicsObject.setBounciness(0.2f);
-        groundPlaneNode.scale(100.0f, 45.0f, 100.0f);
+        groundPlanePhysicsObject.setBounciness(0.0f);
+        groundPlanePhysicsObject.setFriction(0.8f);
+        groundPlaneNode.scale(100.0f, 20.0f, 100.0f);
         groundPlaneNode.setPhysicsObject(groundPlanePhysicsObject);
     }
 

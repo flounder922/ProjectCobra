@@ -3,6 +3,7 @@ package myGameEngine.ThirdPersonCamera;
 import net.java.games.input.Event;
 import ray.input.action.AbstractInputAction;
 import ray.rage.scene.SceneNode;
+import ray.rml.Vector3;
 
 public class RightThirdPersonAction extends AbstractInputAction {
 
@@ -16,7 +17,9 @@ public class RightThirdPersonAction extends AbstractInputAction {
 
     @Override
     public void performAction(float v, Event event) {
-        actorNode.moveLeft(0.05f);
+        Vector3 actorPosition = actorNode.getLocalPosition();
+
+        actorNode.getPhysicsObject().applyForce(-5, 0, 0, actorPosition.x(), actorPosition.y(), actorPosition.z());
         controller.updateCameraPosition();
     }
 }
