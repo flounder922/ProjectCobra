@@ -244,7 +244,7 @@ public class MyGame extends VariableFrameRateGame {
         //Creates the dolphin and sets the render. Followed by the node creation and placement of the node in the world.
         // The entity is then attached to the node.
         SceneNode dolphinNode = createSceneNode(sceneManager,
-                "DolphinNode", "dolphinHighPoly.obj", Vector3f.createFrom(-1.0f, 5.0f, -1.0f));
+                "DolphinNode", "Avatar.obj", Vector3f.createFrom(-1.0f, 5.0f, -1.0f));
 
 
         // Sets up the camera
@@ -418,34 +418,34 @@ public class MyGame extends VariableFrameRateGame {
     }
 
     private void createRagePhysicsWorld(Engine engine) {
-        float mass = 1.0f;
+        float mass = 4.0f;
         float up[] = {0, 1, 0};
         double[] tempVariable;
 
         SceneNode playerAvatarNode = engine.getSceneManager().getSceneNode("DolphinNode");
         SceneNode groundPlaneNode = engine.getSceneManager().getSceneNode("TessellationNode");
 
-
         // Holds the transform for the player avatar
         tempVariable = toDouble(playerAvatarNode.getLocalTransform().toFloatArray());
         playerAvatarPhysicsObject = physicsEngine.addCapsuleObject(
-                physicsEngine.nextUID(), mass, tempVariable, 0.5f, 1.0f);
+                physicsEngine.nextUID(), mass, tempVariable, 0.1f, 0.1f);
 
-        playerAvatarPhysicsObject.setBounciness(0.0f);
-        playerAvatarPhysicsObject.setFriction(0.5f);
-        playerAvatarPhysicsObject.setSleepThresholds(0.8f, 0.5f);
-        playerAvatarPhysicsObject.setDamping(0.79f, 0.5f);
         playerAvatarNode.setPhysicsObject(playerAvatarPhysicsObject);
+        playerAvatarPhysicsObject.setBounciness(0.0f);
+        playerAvatarPhysicsObject.setFriction(0.9f);
+        playerAvatarPhysicsObject.setSleepThresholds(0.8f, 0.5f);
+        playerAvatarPhysicsObject.setDamping(0.6f, 0.5f);
+        playerAvatarNode.scale(0.1f, 0.1f, 0.1f);
 
         // Now holds the transform for the ground plane node
         tempVariable = toDouble(groundPlaneNode.getLocalTransform().toFloatArray());
         groundPlanePhysicsObject = physicsEngine.addStaticPlaneObject(
-                physicsEngine.nextUID(), tempVariable, up, 0.0f);
+                physicsEngine.nextUID(), tempVariable, up, 1.0f);
 
-        groundPlanePhysicsObject.setBounciness(0.0f);
-        groundPlanePhysicsObject.setFriction(0.8f);
-        groundPlaneNode.scale(100.0f, 20.0f, 100.0f);
         groundPlaneNode.setPhysicsObject(groundPlanePhysicsObject);
+        groundPlanePhysicsObject.setBounciness(0.0f);
+        groundPlanePhysicsObject.setFriction(0.9f);
+        groundPlaneNode.scale(100.0f, 20.0f, 100.0f);
     }
 
     private double[] toDouble(float[] floatArray) {
