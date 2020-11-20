@@ -78,7 +78,7 @@ public class ProtocolClient extends GameConnectionClient {
             if (messageTokens[0].compareTo("wsds") == 0) {
                 UUID remoteId = UUID.fromString(messageTokens[1]);
                 sendDetailsForMessage(remoteId,
-                         game.getEngine().getSceneManager().getSceneNode("DolphinNode").getWorldPosition());
+                         game.getEngine().getSceneManager().getSceneNode(game.PLAYER_AVATAR).getWorldPosition());
             }
         }
     }

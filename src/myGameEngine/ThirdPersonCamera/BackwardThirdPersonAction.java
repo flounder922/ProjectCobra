@@ -17,9 +17,24 @@ public class BackwardThirdPersonAction extends AbstractInputAction {
 
     @Override
     public void performAction(float v, Event event) {
-        Vector3 actorPosition = actorNode.getLocalPosition();
+        actorNode.moveBackward(0.01f);
 
-        actorNode.getPhysicsObject().applyForce(0, 0, -5, actorPosition.x(), actorPosition.y(), actorPosition.z());
+        double[] tempVariable = toDouble(actorNode.getLocalTransform().toFloatArray());
+        actorNode.getPhysicsObject().setTransform(tempVariable);
+
         controller.updateCameraPosition();
+    }
+
+    private double[] toDouble(float[] floatArray) {
+        if (floatArray == null)
+            return null;
+
+        int n = floatArray.length;
+        double[] ret = new double[n];
+
+        for (int i = 0; i < n; i++) {
+            ret[i] = (double)floatArray[i];
+        }
+        return ret;
     }
 }

@@ -68,6 +68,8 @@ public class MyGame extends VariableFrameRateGame {
     // Skybox variables
     private static final String SKYBOX_NAME = "SkyBox";
 
+    public final String PLAYER_AVATAR = "PlayerAvatarNode";
+
     // Physics related variables
     private PhysicsEngine physicsEngine;
     private PhysicsObject playerAvatarPhysicsObject, groundPlanePhysicsObject;
@@ -122,6 +124,7 @@ public class MyGame extends VariableFrameRateGame {
         for (SceneNode s : engine.getSceneManager().getSceneNodes()) {
             if (s.getPhysicsObject() != null) {
                 matrix = Matrix4f.createFrom(toFloatArray(s.getPhysicsObject().getTransform()));
+                //s.setLocalRotation(matrix.toMatrix3());
                 s.setLocalPosition(matrix.value(0, 3), matrix.value(1, 3), matrix.value(2, 3));
             }
         }
@@ -133,7 +136,7 @@ public class MyGame extends VariableFrameRateGame {
         renderSystem.setHUD(displayStringPlayerOne, renderSystem.getRenderWindow().getViewport(0).getActualLeft(),
                         renderSystem.getRenderWindow().getViewport(0).getActualBottom() + 5);
 
-        //updateVerticalPosition();
+        updateVerticalPosition();
         orbitController1.updateCameraPosition();
         inputManager.update(elapsedTime);
         processNetworking(elapsedTime);
@@ -145,7 +148,7 @@ public class MyGame extends VariableFrameRateGame {
 
 
     protected void updateVerticalPosition() {
-        SceneNode avatarNode = this.getEngine().getSceneManager().getSceneNode("DolphinNode");
+        SceneNode avatarNode = this.getEngine().getSceneManager().getSceneNode(PLAYER_AVATAR);
 
         SceneNode tessellationNode = this.getEngine().getSceneManager().getSceneNode("TessellationNode");
 
@@ -244,7 +247,7 @@ public class MyGame extends VariableFrameRateGame {
         //Creates the dolphin and sets the render. Followed by the node creation and placement of the node in the world.
         // The entity is then attached to the node.
         SceneNode dolphinNode = createSceneNode(sceneManager,
-                "DolphinNode", "Avatar.obj", Vector3f.createFrom(-1.0f, 5.0f, -1.0f));
+                PLAYER_AVATAR, "Avatar.obj", Vector3f.createFrom(-1.0f, 5.0f, -1.0f));
 
 
         // Sets up the camera
@@ -320,13 +323,13 @@ public class MyGame extends VariableFrameRateGame {
     }
 
     protected void setupOrbitCamera(Engine engine, SceneManager sceneManager) {
-        SceneNode dolphinNode = sceneManager.getSceneNode("DolphinNode");
+        SceneNode dolphinNode = sceneManager.getSceneNode(PLAYER_AVATAR);
         SceneNode cameraNode = sceneManager.getSceneNode("MainCameraNode");
         orbitController1 = new Camera3PController(cameraNode, dolphinNode);
     }
 
     protected void setupMovement(SceneManager sceneManager) {
-        SceneNode dolphinNode = sceneManager.getSceneNode("DolphinNode");
+        SceneNode dolphinNode = sceneManager.getSceneNode(PLAYER_AVATAR);
         movement3PController1 = new Movement3PController(dolphinNode);
     }
 
@@ -334,22 +337,22 @@ public class MyGame extends VariableFrameRateGame {
         inputManager = new GenericInputManager();
         ArrayList controllers = inputManager.getControllers();
 
-        Action moveForwardW = new ForwardThirdPersonAction(sceneManager.getSceneNode("DolphinNode"), orbitController1);
-        Action moveBackwardS = new BackwardThirdPersonAction(sceneManager.getSceneNode("DolphinNode"), orbitController1);
-        Action moveLeftA = new LeftThirdPersonAction(sceneManager.getSceneNode("DolphinNode"), orbitController1);
-        Action moveRightD = new RightThirdPersonAction(sceneManager.getSceneNode("DolphinNode"), orbitController1);
+        Action moveForwardW = new ForwardThirdPersonAction(sceneManager.getSceneNode(PLAYER_AVATAR), orbitController1);
+        Action moveBackwardS = new BackwardThirdPersonAction(sceneManager.getSceneNode(PLAYER_AVATAR), orbitController1);
+        Action moveLeftA = new LeftThirdPersonAction(sceneManager.getSceneNode(PLAYER_AVATAR), orbitController1);
+        Action moveRightD = new RightThirdPersonAction(sceneManager.getSceneNode(PLAYER_AVATAR), orbitController1);
 
-        Action increaseElevation = new ThirdPersonElevationIncrease(sceneManager.getSceneNode("DolphinNode"), orbitController1);
-        Action decreaseElevation = new ThirdPersonElevationDecrease(sceneManager.getSceneNode("DolphinNode"), orbitController1);
+        Action increaseElevation = new ThirdPersonElevationIncrease(sceneManager.getSceneNode(PLAYER_AVATAR), orbitController1);
+        Action decreaseElevation = new ThirdPersonElevationDecrease(sceneManager.getSceneNode(PLAYER_AVATAR), orbitController1);
 
-        Action orbitLeft = new ThirdPersonOrbitLeft(sceneManager.getSceneNode("DolphinNode"), orbitController1);
-        Action orbitRight = new ThirdPersonOrbitRight(sceneManager.getSceneNode("DolphinNode"), orbitController1);
+        Action orbitLeft = new ThirdPersonOrbitLeft(sceneManager.getSceneNode(PLAYER_AVATAR), orbitController1);
+        Action orbitRight = new ThirdPersonOrbitRight(sceneManager.getSceneNode(PLAYER_AVATAR), orbitController1);
 
-        Action radiasIncrease = new ThirdPersonRadiasIncrease(sceneManager.getSceneNode("DolphinNode"), orbitController1);
-        Action radiasDecrease = new ThirdPersonRadiasDecrease(sceneManager.getSceneNode("DolphinNode"), orbitController1);
+        Action radiasIncrease = new ThirdPersonRadiasIncrease(sceneManager.getSceneNode(PLAYER_AVATAR), orbitController1);
+        Action radiasDecrease = new ThirdPersonRadiasDecrease(sceneManager.getSceneNode(PLAYER_AVATAR), orbitController1);
 
-        Action turnLeft = new TurnLeftThirdPersonAction(sceneManager.getSceneNode("DolphinNode"));
-        Action turnRight = new TurnRightThirdPersonAction(sceneManager.getSceneNode("DolphinNode"));
+        Action turnLeft = new TurnLeftThirdPersonAction(sceneManager.getSceneNode(PLAYER_AVATAR));
+        Action turnRight = new TurnRightThirdPersonAction(sceneManager.getSceneNode(PLAYER_AVATAR));
 
         Action disconnect = new ServerDisconnectAction(protocolClient);
 
@@ -422,17 +425,18 @@ public class MyGame extends VariableFrameRateGame {
         float up[] = {0, 1, 0};
         double[] tempVariable;
 
-        SceneNode playerAvatarNode = engine.getSceneManager().getSceneNode("DolphinNode");
+        SceneNode playerAvatarNode = engine.getSceneManager().getSceneNode(PLAYER_AVATAR);
         SceneNode groundPlaneNode = engine.getSceneManager().getSceneNode("TessellationNode");
 
         // Holds the transform for the player avatar
         tempVariable = toDouble(playerAvatarNode.getLocalTransform().toFloatArray());
-        playerAvatarPhysicsObject = physicsEngine.addCapsuleObject(
-                physicsEngine.nextUID(), mass, tempVariable, 0.1f, 0.1f);
+        float[] boxSize = {1f, 1f, 1f};
+        playerAvatarPhysicsObject = physicsEngine.addBoxObject(
+                physicsEngine.nextUID(), mass, tempVariable, boxSize);
 
         playerAvatarNode.setPhysicsObject(playerAvatarPhysicsObject);
         playerAvatarPhysicsObject.setBounciness(0.0f);
-        playerAvatarPhysicsObject.setFriction(0.9f);
+        playerAvatarPhysicsObject.setFriction(0.2f);
         playerAvatarPhysicsObject.setSleepThresholds(0.8f, 0.5f);
         playerAvatarPhysicsObject.setDamping(0.6f, 0.5f);
         playerAvatarNode.scale(0.1f, 0.1f, 0.1f);
@@ -440,11 +444,11 @@ public class MyGame extends VariableFrameRateGame {
         // Now holds the transform for the ground plane node
         tempVariable = toDouble(groundPlaneNode.getLocalTransform().toFloatArray());
         groundPlanePhysicsObject = physicsEngine.addStaticPlaneObject(
-                physicsEngine.nextUID(), tempVariable, up, 1.0f);
+                physicsEngine.nextUID(), tempVariable, up, 0.0f);
 
         groundPlaneNode.setPhysicsObject(groundPlanePhysicsObject);
         groundPlanePhysicsObject.setBounciness(0.0f);
-        groundPlanePhysicsObject.setFriction(0.9f);
+        groundPlanePhysicsObject.setFriction(0.5f);
         groundPlaneNode.scale(100.0f, 20.0f, 100.0f);
     }
 
@@ -474,13 +478,13 @@ public class MyGame extends VariableFrameRateGame {
         return ret;
     }
 
-    protected SceneNode createSceneNode(SceneManager sceneManager, String nameOfNode,
+    protected SceneNode createSceneNode(SceneManager sceneManager, String name,
                                         String nameOfOBJFile, Vector3 spawnLocation) throws IOException {
 
-        Entity entity = sceneManager.createEntity(nameOfNode, nameOfOBJFile);
+        Entity entity = sceneManager.createEntity(name + "Entity", nameOfOBJFile);
         entity.setPrimitive(Renderable.Primitive.TRIANGLES);
 
-        SceneNode sceneNode = sceneManager.getRootSceneNode().createChildSceneNode(nameOfNode);
+        SceneNode sceneNode = sceneManager.getRootSceneNode().createChildSceneNode(name);
         sceneNode.attachObject(entity);
         sceneNode.setLocalPosition(spawnLocation);
 
@@ -549,7 +553,7 @@ public class MyGame extends VariableFrameRateGame {
     }
 
     public Vector3 getPlayerPosition() {
-        SceneNode avatarNode = getEngine().getSceneManager().getSceneNode("DolphinNode");
+        SceneNode avatarNode = getEngine().getSceneManager().getSceneNode(PLAYER_AVATAR);
         return avatarNode.getWorldPosition();
     }
 
