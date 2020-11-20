@@ -72,7 +72,7 @@ public class MyGame extends VariableFrameRateGame {
 
     // Physics related variables
     private PhysicsEngine physicsEngine;
-    private PhysicsObject playerAvatarPhysicsObject, groundPlanePhysicsObject;
+    private PhysicsObject playerAvatarPhysicsObject, groundPlanePhysicsObject, wallPhysicsObject;
 
 
     public MyGame(String serverAddress, int serverPort) {
@@ -129,14 +129,13 @@ public class MyGame extends VariableFrameRateGame {
             }
         }
 
-
         displayStringPlayerOne = "Player HUD";
 
         // Auto adjusting HUD
         renderSystem.setHUD(displayStringPlayerOne, renderSystem.getRenderWindow().getViewport(0).getActualLeft(),
                         renderSystem.getRenderWindow().getViewport(0).getActualBottom() + 5);
 
-        updateVerticalPosition();
+        //updateVerticalPosition();
         orbitController1.updateCameraPosition();
         inputManager.update(elapsedTime);
         processNetworking(elapsedTime);
@@ -249,6 +248,7 @@ public class MyGame extends VariableFrameRateGame {
         SceneNode dolphinNode = createSceneNode(sceneManager,
                 PLAYER_AVATAR, "Avatar.obj", Vector3f.createFrom(-1.0f, 5.0f, -1.0f));
 
+        SceneNode wallNode = createSceneNode(sceneManager, "WallNode", "Wall.obj", Vector3f.createFrom(0.0f, 0.0f, 0.0f));
 
         // Sets up the camera
         setupOrbitCamera(engine, sceneManager);
@@ -427,18 +427,19 @@ public class MyGame extends VariableFrameRateGame {
 
         SceneNode playerAvatarNode = engine.getSceneManager().getSceneNode(PLAYER_AVATAR);
         SceneNode groundPlaneNode = engine.getSceneManager().getSceneNode("TessellationNode");
+        SceneNode wallNode = engine.getSceneManager().getSceneNode("WallNode");
 
         // Holds the transform for the player avatar
         tempVariable = toDouble(playerAvatarNode.getLocalTransform().toFloatArray());
-        float[] boxSize = {1f, 1f, 1f};
+        float[] boxSize = {1f, 0.5f, 1f};
         playerAvatarPhysicsObject = physicsEngine.addBoxObject(
                 physicsEngine.nextUID(), mass, tempVariable, boxSize);
 
         playerAvatarNode.setPhysicsObject(playerAvatarPhysicsObject);
         playerAvatarPhysicsObject.setBounciness(0.0f);
         playerAvatarPhysicsObject.setFriction(0.2f);
-        playerAvatarPhysicsObject.setSleepThresholds(0.8f, 0.5f);
-        playerAvatarPhysicsObject.setDamping(0.6f, 0.5f);
+        //playerAvatarPhysicsObject.setSleepThresholds(0.8f, 0.5f);
+        playerAvatarPhysicsObject.setDamping(0.2f, 0.2f);
         playerAvatarNode.scale(0.1f, 0.1f, 0.1f);
 
         // Now holds the transform for the ground plane node
@@ -450,6 +451,13 @@ public class MyGame extends VariableFrameRateGame {
         groundPlanePhysicsObject.setBounciness(0.0f);
         groundPlanePhysicsObject.setFriction(0.5f);
         groundPlaneNode.scale(100.0f, 20.0f, 100.0f);
+
+
+        tempVariable = toDouble(wallNode.getLocalTransform().toFloatArray());
+        float[] wallSize = {3f, 3f, 0.5f};
+        wallPhysicsObject = physicsEngine.addBoxObject(physicsEngine.nextUID(),0, tempVariable, wallSize);
+        wallNode.setPhysicsObject(wallPhysicsObject);
+        wallNode.scale(0.5f, 0.5f, 0.5f);
     }
 
     private double[] toDouble(float[] floatArray) {

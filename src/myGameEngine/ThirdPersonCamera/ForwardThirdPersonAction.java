@@ -17,12 +17,12 @@ public class ForwardThirdPersonAction extends AbstractInputAction {
 
     @Override
     public void performAction(float v, Event event) {
-        actorNode.moveForward(0.02f);
+        //actorNode.moveForward(0.02f);
 
-        //actorNode.getPhysicsObject().applyForce(0, 0, 5, actorPosition.x(), actorPosition.y(), actorPosition.z());
+        actorNode.getPhysicsObject().applyForce(0, 0, 5, 0, 0,0);
 
-        double[] tempVariable = toDouble(actorNode.getLocalTransform().toFloatArray());
-        actorNode.getPhysicsObject().setTransform(tempVariable);
+        //double[] tempVariable = toDouble(actorNode.getLocalTransform().toFloatArray());
+        //actorNode.getPhysicsObject().setTransform(tempVariable);
 
         controller.updateCameraPosition();
     }

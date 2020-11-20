@@ -17,10 +17,12 @@ public class RightThirdPersonAction extends AbstractInputAction {
 
     @Override
     public void performAction(float v, Event event) {
-        actorNode.moveLeft(0.02f);
+        //actorNode.moveLeft(0.02f);
 
-        double[] tempVariable = toDouble(actorNode.getLocalTransform().toFloatArray());
-        actorNode.getPhysicsObject().setTransform(tempVariable);
+        actorNode.getPhysicsObject().applyForce(-5, 0, 0, 0, 0, 0);
+
+        //double[] tempVariable = toDouble(actorNode.getLocalTransform().toFloatArray());
+        //actorNode.getPhysicsObject().setTransform(tempVariable);
 
         controller.updateCameraPosition();
     }
