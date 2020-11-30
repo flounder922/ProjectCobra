@@ -21,7 +21,7 @@ public class TurnLeftThirdPersonAction extends AbstractInputAction {
         actorNode.setLocalRotation(matrixRotation.mult(actorNode.getWorldRotation()));
 
         double[] tempVariable = toDouble(actorNode.getLocalTransform().toFloatArray());
-        actorNode.getPhysicsObject().setTransform(tempVariable);
+        //actorNode.getPhysicsObject().setTransform(tempVariable);
 
     }
 

@@ -245,6 +245,8 @@ public class MyGame extends VariableFrameRateGame {
 
         //Creates the dolphin and sets the render. Followed by the node creation and placement of the node in the world.
         // The entity is then attached to the node.
+        SkeletalEntity playerAvatar = sceneManager.createSkeletalEntity("PlayerAvatar", "Avatar.rkm", "Avatar.rks");
+
         SceneNode dolphinNode = createSceneNode(sceneManager,
                 PLAYER_AVATAR, "Avatar.obj", Vector3f.createFrom(-1.0f, 5.0f, -1.0f));
 
@@ -314,6 +316,7 @@ public class MyGame extends VariableFrameRateGame {
 
         // Setup the networking
         setupNetworking();
+
     }
 
     @Override
@@ -450,7 +453,7 @@ public class MyGame extends VariableFrameRateGame {
         groundPlaneNode.setPhysicsObject(groundPlanePhysicsObject);
         groundPlanePhysicsObject.setBounciness(0.0f);
         groundPlanePhysicsObject.setFriction(0.5f);
-        groundPlaneNode.scale(100.0f, 20.0f, 100.0f);
+        groundPlaneNode.scale(100.0f, 1.0f, 100.0f);
 
 
         tempVariable = toDouble(wallNode.getLocalTransform().toFloatArray());

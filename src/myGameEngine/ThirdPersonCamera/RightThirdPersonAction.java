@@ -18,8 +18,10 @@ public class RightThirdPersonAction extends AbstractInputAction {
     @Override
     public void performAction(float v, Event event) {
         //actorNode.moveLeft(0.02f);
+        float xForce = actorNode.getLocalRightAxis().x();
+        float zForce = actorNode.getLocalRightAxis().z();
 
-        actorNode.getPhysicsObject().applyForce(-5, 0, 0, 0, 0, 0);
+        actorNode.getPhysicsObject().applyForce(xForce * -5, 0, zForce * -5, 0, 0, 0);
 
         //double[] tempVariable = toDouble(actorNode.getLocalTransform().toFloatArray());
         //actorNode.getPhysicsObject().setTransform(tempVariable);
