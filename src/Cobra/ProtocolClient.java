@@ -16,6 +16,7 @@ public class ProtocolClient extends GameConnectionClient {
     private MyGame game;
     private UUID id;
     private Vector<GhostAvatar> ghostAvatars;
+    private GhostNPC ghostNPC;
 
     public ProtocolClient(InetAddress remAddr, int remPort, ProtocolType protocolType, MyGame game) throws IOException {
         super(remAddr, remPort, protocolType);
@@ -43,25 +44,22 @@ public class ProtocolClient extends GameConnectionClient {
                     System.out.println("Failed to join server");
                 }
             }
+
             if (messageTokens[0].compareTo("bye") == 0) {
                 // format: bye, remoteId
                 UUID ghostID = UUID.fromString(messageTokens[1]);
                 removeGhostAvatar(ghostID);
             }
 
-            if ((messageTokens[0].compareTo("dsfr") == 0) // receive dsfr
-                    || (messageTokens[0].compareTo("create") == 0)) { // format: create, remoteId, x,y,z or dsfr, remoteId, x,y,z
+            if ((messageTokens[0].compareTo("dsfr") == 0) || (messageTokens[0].compareTo("create") == 0)) {
+                // format: create, remoteId, x,y,z or dsfr, remoteId, x,y,z
                 System.out.println("Look at me I am trying to create something");
                 UUID ghostID = UUID.fromString(messageTokens[1]);
                 Vector3 ghostPosition = Vector3f.createFrom(
                         Float.parseFloat(messageTokens[2]),
                         Float.parseFloat(messageTokens[3]),
                         Float.parseFloat(messageTokens[4]));
-                try {
-                    createGhostAvatar(ghostID, ghostPosition);
-                } catch (IOException e) {
-                    System.out.println("error creating ghost avatar");
-                }
+                createGhostAvatar(ghostID, ghostPosition);
             }
 
             if (messageTokens[0].compareTo("move") == 0) {
@@ -80,8 +78,61 @@ public class ProtocolClient extends GameConnectionClient {
                 sendDetailsForMessage(remoteId,
                          game.getEngine().getSceneManager().getSceneNode(game.PLAYER_AVATAR).getWorldPosition());
             }
+
+            if (messageTokens[0].compareTo("mnpc") == 0) {
+                int ghostID = Integer.parseInt(messageTokens[1]);
+                Vector3 ghostPosition = Vector3f.createFrom(
+                        Float.parseFloat(messageTokens[2]),
+                        Float.parseFloat(messageTokens[3]),
+                        Float.parseFloat(messageTokens[4]));
+                updateGhostNpc(ghostID, ghostPosition);
+            }
+
+            if (messageTokens[0].compareTo("cnpc") == 0) {
+                int ghostID = Integer.parseInt(messageTokens[1]);
+                Vector3 ghostPosition = Vector3f.createFrom(
+                        Float.parseFloat(messageTokens[2]),
+                        Float.parseFloat(messageTokens[3]),
+                        Float.parseFloat(messageTokens[4]));
+                createGhostNPC(ghostID, ghostPosition);
+            }
+
+            if (messageTokens[0].compareTo("dmg") == 0) {
+                int idReceived = Integer.parseInt(messageTokens[1]);
+
+                if(idReceived == Integer.parseInt(id.toString()))
+                    game.takeDamage();
+            }
+
+            if (messageTokens[0].compareTo("npcmtp") == 0) {
+                int ghostNPCID = Integer.parseInt(messageTokens[1]);
+                Vector3 ghostNpcPosition = Vector3f.createFrom(
+                        Float.parseFloat(messageTokens[2]),
+                        Float.parseFloat(messageTokens[3]),
+                        Float.parseFloat(messageTokens[4]));
+                applyForceToNPC(ghostNPCID, ghostNpcPosition);
+                sendNpcChange();
+            }
         }
     }
+
+    private void sendNpcChange() {
+        try {
+            String message = "npcchange";
+            message += "," + ghostNPC.getGhostNPCPosition().x();
+            message += "," + ghostNPC.getGhostNPCPosition().y();
+            message += "," + ghostNPC.getGhostNPCPosition().z();
+            sendPacket(message);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void applyForceToNPC(int ghostNPCID, Vector3 ghostNpcPosition) {
+
+
+    }
+
 
     // format: join, localId
     public void sendJoinMessage() {
@@ -102,6 +153,7 @@ public class ProtocolClient extends GameConnectionClient {
             e.printStackTrace();
         }
     }
+
     public void sendByeMessage() {
         if (game.isConnected()) {
             try {
@@ -145,15 +197,16 @@ public class ProtocolClient extends GameConnectionClient {
     }
 
     // Instantiates a new instance of the ghost avatar class and adds it to the ghost avatar list.
-    private void createGhostAvatar(UUID ghostID, Vector3 ghostPosition) throws IOException {
+    // Player Ghosts
+    private void createGhostAvatar(UUID ghostID, Vector3 ghostPosition) {
        ghostAvatars.add(new GhostAvatar(ghostID, ghostPosition));
     }
 
     private void moveGhostAvatar(UUID ghostID, Vector3 ghostPosition) {
 
         for (int i = 0; i < ghostAvatars.size(); ++i) {
-            if (ghostAvatars.get(i).id == ghostID) {
-                ghostAvatars.get(i).moveGhost(ghostPosition);
+            if (ghostAvatars.get(i).getGhostId() == ghostID) {
+                ghostAvatars.get(i).setGhostAvatarPosition(ghostPosition);
             }
         }
     }
@@ -173,9 +226,14 @@ public class ProtocolClient extends GameConnectionClient {
         private SceneNode node;
         private Entity entity;
 
-        public GhostAvatar(UUID id, Vector3 position) throws IOException {
+        public GhostAvatar(UUID id, Vector3 position) {
             this.id = id;
-            createGhostAvatar(id, position);
+            try {
+                createGhostAvatar(id, position);
+            } catch (IOException e) {
+                System.out.println("GhostAvatar Creation Problem!");
+                e.printStackTrace();
+            }
         }
 
         protected void createGhostAvatar(UUID ghostID, Vector3 ghostPosition) throws IOException {
@@ -187,9 +245,63 @@ public class ProtocolClient extends GameConnectionClient {
             node.setLocalPosition(ghostPosition);
         }
 
-
-        protected void moveGhost(Vector3 ghostPosition) {
+        protected void setGhostAvatarPosition(Vector3 ghostPosition) {
             node.setLocalPosition(ghostPosition);
+        }
+
+        public Vector3 getGhostNPCPosition() {
+            return node.getLocalPosition();
+        }
+
+        public UUID getGhostId() {
+            return id;
+        }
+    }
+
+    // Instantiates a new instance of the npc ghost avatar.
+    // NPC Ghost
+    private void createGhostNPC(int ghostID, Vector3 ghostPosition) {
+        ghostNPC = new GhostNPC(ghostID, ghostPosition);
+    }
+
+    private void updateGhostNpc(int ghostID, Vector3 ghostPosition) {
+       ghostNPC.setGhostNPCPosition(ghostPosition);
+    }
+
+    public class GhostNPC {
+        private int id;
+        private SceneNode node;
+        private Entity entity;
+
+        public GhostNPC(int id, Vector3 position) {
+            this.id = id;
+            try {
+                createGhostNPC(id, position);
+            } catch (IOException e) {
+                System.out.println("GhostNPC Creation Problem!");
+                e.printStackTrace();
+            }
+        }
+
+        private void createGhostNPC(int id, Vector3 position) throws IOException {
+            entity = game.getEngine().getSceneManager().createEntity(String.valueOf(id), "dolphinHighPoly.obj");
+            entity.setPrimitive(Renderable.Primitive.TRIANGLES);
+
+            node = game.getEngine().getSceneManager().getRootSceneNode().createChildSceneNode(String.valueOf(id));
+            node.attachObject(entity);
+            node.setLocalPosition(position);
+        }
+
+        public void setGhostNPCPosition(Vector3 position) {
+            node.setLocalPosition(position);
+        }
+
+        public Vector3 getGhostNPCPosition() {
+            return node.getLocalPosition();
+        }
+
+        public int getGhostNPCId() {
+            return id;
         }
     }
 }

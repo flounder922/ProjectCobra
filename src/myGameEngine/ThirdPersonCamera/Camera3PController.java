@@ -116,6 +116,10 @@ public class Camera3PController {
         updateCameraPosition();
     }
 
+    public float getAzimuth() {
+        return cameraAzimuth;
+    }
+
     private class OrbitAroundAction extends AbstractInputAction {
         @Override
         public void performAction(float v, Event event) {

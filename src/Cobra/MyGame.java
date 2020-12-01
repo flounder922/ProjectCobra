@@ -4,6 +4,7 @@ import myGameEngine.ServerDisconnectAction;
 import myGameEngine.ThirdPersonCamera.*;
 import net.java.games.input.Component;
 import net.java.games.input.Controller;
+import ray.audio.*;
 import ray.input.GenericInputManager;
 import ray.input.InputManager;
 import ray.input.action.Action;
@@ -65,6 +66,11 @@ public class MyGame extends VariableFrameRateGame {
 
     // Input manager variable
     private InputManager inputManager;
+    private IAudioManager audioManager;
+
+    Sound birdSound;
+
+    boolean animationPlaying = false;
 
 
     // Variables for camera controller and movement of player avatar
@@ -78,7 +84,8 @@ public class MyGame extends VariableFrameRateGame {
 
     // Physics related variables
     private PhysicsEngine physicsEngine;
-    private PhysicsObject playerAvatarPhysicsObject, groundPlanePhysicsObject, wallPhysicsObject;
+    private PhysicsObject playerAvatarPhysicsObject, groundPlanePhysicsObject, wallPhysicsObject, npcPhysicsObject;
+    private int playerHealth = 10;
 
 
     public MyGame(String serverAddress, int serverPort) {
@@ -125,6 +132,7 @@ public class MyGame extends VariableFrameRateGame {
         elapsedTime += engine.getElapsedTimeMillis();
 
         SkeletalEntity playerAvatarEntity = (SkeletalEntity) engine.getSceneManager().getEntity("PlayerAvatar");
+        SceneNode wallNode = engine.getSceneManager().getSceneNode("WallNode");
 
         Matrix4 matrix;
         physicsEngine.update(engine.getElapsedTimeMillis());
@@ -137,7 +145,7 @@ public class MyGame extends VariableFrameRateGame {
             }
         }
 
-        displayStringPlayerOne = "Player HUD";
+        displayStringPlayerOne = "Health: " + playerHealth;
 
         // Auto adjusting HUD
         renderSystem.setHUD(displayStringPlayerOne, renderSystem.getRenderWindow().getViewport(0).getActualLeft(),
@@ -149,6 +157,8 @@ public class MyGame extends VariableFrameRateGame {
         processNetworking(elapsedTime);
         playerAvatarEntity.update();
 
+        birdSound.setLocation(wallNode.getWorldPosition());
+        setEarParameters(getEngine().getSceneManager());
 
         if (isClientConnected)
             protocolClient.sendMoveMessage(getPlayerPosition());
@@ -340,6 +350,9 @@ public class MyGame extends VariableFrameRateGame {
         // Setup the networking
         setupNetworking();
 
+        // Initialize audio
+        initializeSound(sceneManager);
+
     }
 
     @Override
@@ -361,21 +374,21 @@ public class MyGame extends VariableFrameRateGame {
 
     @Override
     public void keyPressed(KeyEvent event) {
-        switch (event.getKeyCode()) {
-            case KeyEvent.VK_K:
-                doWave();
-                break;
-            case KeyEvent.VK_L:
-                doClap();
-                break;
-            case KeyEvent.VK_J:
-                stopAnimation();
-                break;
-        }
+
+            switch (event.getKeyCode()) {
+                case KeyEvent.VK_K:
+                    doWave();
+                    break;
+                case KeyEvent.VK_L:
+                    doClap();
+                    break;
+                case KeyEvent.VK_J:
+                    stopAnimation();
+                    break;
+            }
+
         super.keyPressed(event);
     }
-
-
 
     protected void setupInputs(SceneManager sceneManager) {
         inputManager = new GenericInputManager();
@@ -615,22 +628,63 @@ public class MyGame extends VariableFrameRateGame {
 
     private void doWave() {
         SkeletalEntity playerAvatarEntity = (SkeletalEntity) getEngine().getSceneManager().getEntity("PlayerAvatar");
-        playerAvatarEntity.stopAnimation();
-        playerAvatarEntity.playAnimation("WaveAction", 0.5f, LOOP, 0);
-        System.out.println("I am trying to wave!");
+
+        if (!animationPlaying) {
+            playerAvatarEntity.stopAnimation();
+            playerAvatarEntity.playAnimation("WaveAction", 0.5f, LOOP, 0);
+            animationPlaying = true;
+        }
     }
 
     private void doClap() {
         SkeletalEntity playerAvatarEntity = (SkeletalEntity) getEngine().getSceneManager().getEntity("PlayerAvatar");
         playerAvatarEntity.stopAnimation();
         playerAvatarEntity.playAnimation("ClapAction", 0.5f, LOOP, 0);
-        System.out.println("I am trying to clap!");
     }
 
     private void stopAnimation() {
         SkeletalEntity playerAvatarEntity = (SkeletalEntity) getEngine().getSceneManager().getEntity("PlayerAvatar");
         playerAvatarEntity.stopAnimation();
-        System.out.println("Stop the animation");
+    }
+
+    public void initializeSound(SceneManager sceneManager) {
+
+        AudioResource resource;
+        audioManager = AudioManagerFactory.createAudioManager("ray.audio.joal.JOALAudioManager");
+
+        if (!audioManager.initialize()) {
+            System.out.println("Audio manager failed to initialize!");
+            return;
+        }
+
+        resource = audioManager.createAudioResource("birds.wav", AudioResourceType.AUDIO_STREAM);
+
+        birdSound = new Sound(resource, SoundType.SOUND_EFFECT, 25, true);
+
+        birdSound.initialize(audioManager);
+        birdSound.setMaxDistance(10.0f);
+        birdSound.setMinDistance(0.5f);
+        birdSound.setRollOff(3.0f);
+
+        SceneNode wallNode = sceneManager.getSceneNode("WallNode");
+
+        birdSound.setLocation(wallNode.getWorldPosition());
+        setEarParameters(sceneManager);
+
+        birdSound.play();
+    }
+
+    private void setEarParameters(SceneManager sceneManager) {
+        SceneNode playerNode = sceneManager.getSceneNode("PlayerAvatarNode");
+
+        Vector3 avDirection = playerNode.getWorldForwardAxis();
+
+        audioManager.getEar().setLocation(getPlayerPosition());
+        audioManager.getEar().setOrientation(avDirection, Vector3f.createFrom(0,1,0));
+    }
+
+    public void takeDamage() {
+        playerHealth--;
     }
 }
 

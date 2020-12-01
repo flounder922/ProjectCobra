@@ -3,14 +3,20 @@ package server;
 import ray.networking.server.GameConnectionServer;
 import ray.networking.server.IClientInfo;
 import ray.rml.Vector3;
+import ray.rml.Vector3f;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
-public class GameServerUDP extends GameConnectionServer<UUID> {
+public class GameAIServerUDP extends GameConnectionServer<UUID> {
 
-    public GameServerUDP(int localPort, ProtocolType protocolType) throws IOException {
+    public NPCcontroller npcController = new NPCcontroller(this);
+    public Map<UUID, Vector3> playersPositions = new HashMap<>();
+
+    public GameAIServerUDP(int localPort, ProtocolType protocolType) throws IOException {
         super(localPort, protocolType);
     }
 
@@ -22,6 +28,7 @@ public class GameServerUDP extends GameConnectionServer<UUID> {
 
 
         if (messageTokens.length > 0) {
+
             // Case where the server receives a JOIN message'
             // Format: join, localId
             if (messageTokens[0].compareTo("join") == 0) {
@@ -29,10 +36,12 @@ public class GameServerUDP extends GameConnectionServer<UUID> {
                     IClientInfo clientInfo = getServerSocket().createClientInfo(senderIP, senderPort);
                     addClient(clientInfo, clientID);
                     sendJoinedMessages(clientID, true);
+                    sendCreateNPC(clientID);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
+
             // Case where server receives a CREATE message
             // Format: create, localId, x, y, z
             if (messageTokens[0].compareTo("create") == 0) {
@@ -46,6 +55,7 @@ public class GameServerUDP extends GameConnectionServer<UUID> {
             if (messageTokens[0].compareTo("bye") == 0) {
                 sendByeMessages(clientID);
                 removeClient(clientID);
+                playersPositions.remove(clientID);
             }
 
             // Case where server receives a DETAILS-FOR message
@@ -60,9 +70,23 @@ public class GameServerUDP extends GameConnectionServer<UUID> {
             if (messageTokens[0].compareTo("move") == 0) {
                 String[] position = {messageTokens[2], messageTokens[3], messageTokens[4]};
                 sendMoveMessages(clientID, position);
+                trackPlayer(clientID, position);
             }
         }
     }
+
+    private void sendCreateNPC(UUID clientID) {
+        try {
+            String message = "cnpc," + clientID.toString();
+            message += "," + (npcController.getNPC().getX());
+            message += "," + (npcController.getNPC().getY());
+            message += "," + (npcController.getNPC().getZ());
+            sendPacket(message, clientID);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     private void sendMoveMessages(UUID clientID, String[] position) {
         try {
@@ -127,13 +151,69 @@ public class GameServerUDP extends GameConnectionServer<UUID> {
 
     private void sendDetailsToMessage(UUID clientId, UUID remoteId, String[] position) {
 
-        System.out.println("Sending details to " + clientId + " for " + clientId);
+        System.out.println("Sending details to " + clientId + " for " + remoteId);
         try {
             String message = "dsfr," + clientId;
             message += "," + position[0];
             message += "," + position[1];
             message += "," + position[2];
             sendPacket(message, remoteId);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void trackPlayer(UUID clientID, String[] position) {
+
+        Vector3 playerPosition = Vector3f.createFrom(
+                Float.parseFloat(position[0]),
+                Float.parseFloat(position[1]),
+                Float.parseFloat(position[2]));
+
+        if (playersPositions.containsKey(clientID))
+            playersPositions.replace(clientID, playerPosition);
+        else
+            playersPositions.put(clientID, playerPosition);
+
+        /*
+        npcController.checkPlayerProximity(clientID,
+                Vector3f.createFrom(
+                    Float.parseFloat(position[0]),
+                    Float.parseFloat(position[1]),
+                    Float.parseFloat(position[2])));
+
+         */
+    }
+
+    protected void sendDamagetoClient(UUID clientID) {
+        try {
+            String message ="dmg," + clientID.toString();
+            sendPacket(message, clientID);
+            System.out.println(clientID.toString() + " has been attacked by the NPC!!!!");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void sendNPCinfo() {
+        try {
+            String message = "mnpc," + 1;
+            message += "," + (npcController.getNPC().getX());
+            message += "," + (npcController.getNPC().getY());
+            message += "," + (npcController.getNPC().getZ());
+            sendPacketToAll(message);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void sendMoveTowardPlayer(UUID target) {
+        try {
+            String message = "npcmtp," + 1;
+            message += "," + (npcController.getNPC().getX());
+            message += "," + (npcController.getNPC().getY());
+            message += "," + (npcController.getNPC().getZ());
+            sendPacket(message, target);
         } catch (IOException e) {
             e.printStackTrace();
         }
