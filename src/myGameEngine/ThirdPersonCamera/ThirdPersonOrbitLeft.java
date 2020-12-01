@@ -1,21 +1,22 @@
 package myGameEngine.ThirdPersonCamera;
 
+import Cobra.MyGame;
 import net.java.games.input.Event;
 import ray.input.action.AbstractInputAction;
 import ray.rage.scene.SceneNode;
 
 public class ThirdPersonOrbitLeft extends AbstractInputAction {
 
-    private Camera3PController controller;
+    private static MyGame game;
     private SceneNode actorNode;
 
-    public ThirdPersonOrbitLeft(SceneNode actorNode, Camera3PController controller) {
+    public ThirdPersonOrbitLeft(SceneNode actorNode, MyGame game) {
         this.actorNode = actorNode;
-        this.controller = controller;
+        this.game = game;
     }
 
     @Override
     public void performAction(float v, Event event) {
-        controller.increaseAzimuth(-0.5f);
+        game.orbitController1.increaseAzimuth(-0.5f);
     }
 }

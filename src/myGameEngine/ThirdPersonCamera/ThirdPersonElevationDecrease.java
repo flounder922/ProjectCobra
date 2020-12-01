@@ -1,21 +1,22 @@
 package myGameEngine.ThirdPersonCamera;
 
+import Cobra.MyGame;
 import net.java.games.input.Event;
 import ray.input.action.AbstractInputAction;
 import ray.rage.scene.SceneNode;
 
 public class ThirdPersonElevationDecrease extends AbstractInputAction {
 
-    private Camera3PController controller;
+    private static MyGame game;
     private SceneNode actorNode;
 
-    public ThirdPersonElevationDecrease(SceneNode actorNode, Camera3PController controller) {
+    public ThirdPersonElevationDecrease(SceneNode actorNode, MyGame game) {
         this.actorNode = actorNode;
-        this.controller = controller;
+        this.game = game;
     }
 
     @Override
     public void performAction(float v, Event event) {
-        controller.increaseElevation(-0.5f);
+        game.orbitController1.increaseElevation(-0.5f);
     }
 }

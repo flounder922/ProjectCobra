@@ -33,6 +33,7 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.awt.geom.AffineTransform;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -43,8 +44,11 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.*;
 
+import static ray.rage.scene.SkeletalEntity.EndType.LOOP;
+
 public class MyGame extends VariableFrameRateGame {
 
+    private static MyGame game;
     // Render system and HUD variables
     private GL4RenderSystem renderSystem; // render system for the game, is defined each update.
     private float elapsedTime = 0.0f;  // Used to keep track of how long the game has been running.
@@ -58,12 +62,14 @@ public class MyGame extends VariableFrameRateGame {
     private boolean isClientConnected;
     private Vector<UUID> gameObjectsToRemove;
 
+
     // Input manager variable
     private InputManager inputManager;
 
+
     // Variables for camera controller and movement of player avatar
-    private Camera3PController orbitController1;
-    private Movement3PController movement3PController1;
+    public Camera3PController orbitController1;
+    public Movement3PController movement3PController1;
 
     // Skybox variables
     private static final String SKYBOX_NAME = "SkyBox";
@@ -83,7 +89,7 @@ public class MyGame extends VariableFrameRateGame {
     }
 
     public static void main(String[] args) {
-        Game game = new MyGame(args[0], Integer.parseInt(args[1]));
+        game = new MyGame(args[0], Integer.parseInt(args[1]));
         
         try {
             game.startup();
@@ -118,6 +124,8 @@ public class MyGame extends VariableFrameRateGame {
         renderSystem = (GL4RenderSystem) engine.getRenderSystem();
         elapsedTime += engine.getElapsedTimeMillis();
 
+        SkeletalEntity playerAvatarEntity = (SkeletalEntity) engine.getSceneManager().getEntity("PlayerAvatar");
+
         Matrix4 matrix;
         physicsEngine.update(engine.getElapsedTimeMillis());
 
@@ -139,10 +147,11 @@ public class MyGame extends VariableFrameRateGame {
         orbitController1.updateCameraPosition();
         inputManager.update(elapsedTime);
         processNetworking(elapsedTime);
+        playerAvatarEntity.update();
+
 
         if (isClientConnected)
             protocolClient.sendMoveMessage(getPlayerPosition());
-
     }
 
 
@@ -243,12 +252,26 @@ public class MyGame extends VariableFrameRateGame {
         sceneManager.setActiveSkyBox(skyBox);
 
 
-        //Creates the dolphin and sets the render. Followed by the node creation and placement of the node in the world.
-        // The entity is then attached to the node.
-        SkeletalEntity playerAvatar = sceneManager.createSkeletalEntity("PlayerAvatar", "Avatar.rkm", "Avatar.rks");
+        // Create the skeletal entity
+        SkeletalEntity playerAvatarEntity = sceneManager.createSkeletalEntity("PlayerAvatar", "Avatar.rkm", "Avatar.rks");
 
-        SceneNode dolphinNode = createSceneNode(sceneManager,
-                PLAYER_AVATAR, "Avatar.obj", Vector3f.createFrom(-1.0f, 5.0f, -1.0f));
+        // Create and attach the texture to the skeletal entity
+        Texture playerAvatarTexture = sceneManager.getTextureManager().getAssetByPath("avatarTexture.jpg");
+        TextureState playerAvatarTextureState = (TextureState) sceneManager.getRenderSystem().createRenderState(RenderState.Type.TEXTURE);
+
+        playerAvatarTextureState.setTexture(playerAvatarTexture);
+        playerAvatarEntity.setRenderState(playerAvatarTextureState);
+
+        // Attach the entity to a scene node
+        SceneNode playerAvatarNode = sceneManager.getRootSceneNode().createChildSceneNode("PlayerAvatarNode");
+        playerAvatarNode.attachObject(playerAvatarEntity);
+
+        // Load the animations
+        playerAvatarEntity.loadAnimation("ClapAction", "Avatar_clap.rka");
+        playerAvatarEntity.loadAnimation("WaveAction", "Avatar_wave.rka");
+
+        //SceneNode dolphinNode = createSceneNode(sceneManager,
+               // PLAYER_AVATAR, "Avatar.obj", Vector3f.createFrom(-1.0f, 5.0f, -1.0f));
 
         SceneNode wallNode = createSceneNode(sceneManager, "WallNode", "Wall.obj", Vector3f.createFrom(0.0f, 0.0f, 0.0f));
 
@@ -302,7 +325,7 @@ public class MyGame extends VariableFrameRateGame {
         SceneNode positionalLightNode =
                 sceneManager.getRootSceneNode().createChildSceneNode(positionalLight.getName() + "Node");
         positionalLightNode.attachObject(positionalLight);
-        dolphinNode.attachChild(positionalLightNode);
+        playerAvatarNode.attachChild(positionalLightNode);
 
 
         // Setup the physics
@@ -336,26 +359,44 @@ public class MyGame extends VariableFrameRateGame {
         movement3PController1 = new Movement3PController(dolphinNode);
     }
 
+    @Override
+    public void keyPressed(KeyEvent event) {
+        switch (event.getKeyCode()) {
+            case KeyEvent.VK_K:
+                doWave();
+                break;
+            case KeyEvent.VK_L:
+                doClap();
+                break;
+            case KeyEvent.VK_J:
+                stopAnimation();
+                break;
+        }
+        super.keyPressed(event);
+    }
+
+
+
     protected void setupInputs(SceneManager sceneManager) {
         inputManager = new GenericInputManager();
         ArrayList controllers = inputManager.getControllers();
 
-        Action moveForwardW = new ForwardThirdPersonAction(sceneManager.getSceneNode(PLAYER_AVATAR), orbitController1);
-        Action moveBackwardS = new BackwardThirdPersonAction(sceneManager.getSceneNode(PLAYER_AVATAR), orbitController1);
-        Action moveLeftA = new LeftThirdPersonAction(sceneManager.getSceneNode(PLAYER_AVATAR), orbitController1);
-        Action moveRightD = new RightThirdPersonAction(sceneManager.getSceneNode(PLAYER_AVATAR), orbitController1);
+        Action moveForwardW = new ForwardThirdPersonAction(sceneManager.getSceneNode(PLAYER_AVATAR), game);
+        Action moveBackwardS = new BackwardThirdPersonAction(sceneManager.getSceneNode(PLAYER_AVATAR), game);
+        Action moveLeftA = new LeftThirdPersonAction(sceneManager.getSceneNode(PLAYER_AVATAR), game);
+        Action moveRightD = new RightThirdPersonAction(sceneManager.getSceneNode(PLAYER_AVATAR), game);
 
-        Action increaseElevation = new ThirdPersonElevationIncrease(sceneManager.getSceneNode(PLAYER_AVATAR), orbitController1);
-        Action decreaseElevation = new ThirdPersonElevationDecrease(sceneManager.getSceneNode(PLAYER_AVATAR), orbitController1);
+        Action increaseElevation = new ThirdPersonElevationIncrease(sceneManager.getSceneNode(PLAYER_AVATAR), game);
+        Action decreaseElevation = new ThirdPersonElevationDecrease(sceneManager.getSceneNode(PLAYER_AVATAR), game);
 
-        Action orbitLeft = new ThirdPersonOrbitLeft(sceneManager.getSceneNode(PLAYER_AVATAR), orbitController1);
-        Action orbitRight = new ThirdPersonOrbitRight(sceneManager.getSceneNode(PLAYER_AVATAR), orbitController1);
+        Action orbitLeft = new ThirdPersonOrbitLeft(sceneManager.getSceneNode(PLAYER_AVATAR), game);
+        Action orbitRight = new ThirdPersonOrbitRight(sceneManager.getSceneNode(PLAYER_AVATAR), game);
 
-        Action radiasIncrease = new ThirdPersonRadiasIncrease(sceneManager.getSceneNode(PLAYER_AVATAR), orbitController1);
-        Action radiasDecrease = new ThirdPersonRadiasDecrease(sceneManager.getSceneNode(PLAYER_AVATAR), orbitController1);
+        Action radiasIncrease = new ThirdPersonRadiasIncrease(sceneManager.getSceneNode(PLAYER_AVATAR), game);
+        Action radiasDecrease = new ThirdPersonRadiasDecrease(sceneManager.getSceneNode(PLAYER_AVATAR), game);
 
-        Action turnLeft = new TurnLeftThirdPersonAction(sceneManager.getSceneNode(PLAYER_AVATAR));
-        Action turnRight = new TurnRightThirdPersonAction(sceneManager.getSceneNode(PLAYER_AVATAR));
+        Action turnLeft = new TurnLeftThirdPersonAction(sceneManager.getSceneNode(PLAYER_AVATAR), game);
+        Action turnRight = new TurnRightThirdPersonAction(sceneManager.getSceneNode(PLAYER_AVATAR), game);
 
         Action disconnect = new ServerDisconnectAction(protocolClient);
 
@@ -570,6 +611,26 @@ public class MyGame extends VariableFrameRateGame {
 
     public boolean isConnected() {
         return isClientConnected;
+    }
+
+    private void doWave() {
+        SkeletalEntity playerAvatarEntity = (SkeletalEntity) getEngine().getSceneManager().getEntity("PlayerAvatar");
+        playerAvatarEntity.stopAnimation();
+        playerAvatarEntity.playAnimation("WaveAction", 0.5f, LOOP, 0);
+        System.out.println("I am trying to wave!");
+    }
+
+    private void doClap() {
+        SkeletalEntity playerAvatarEntity = (SkeletalEntity) getEngine().getSceneManager().getEntity("PlayerAvatar");
+        playerAvatarEntity.stopAnimation();
+        playerAvatarEntity.playAnimation("ClapAction", 0.5f, LOOP, 0);
+        System.out.println("I am trying to clap!");
+    }
+
+    private void stopAnimation() {
+        SkeletalEntity playerAvatarEntity = (SkeletalEntity) getEngine().getSceneManager().getEntity("PlayerAvatar");
+        playerAvatarEntity.stopAnimation();
+        System.out.println("Stop the animation");
     }
 }
 
