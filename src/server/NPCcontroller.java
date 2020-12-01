@@ -1,17 +1,21 @@
+/*
 package server;
 
 import ray.ai.behaviortrees.BTCompositeType;
 import ray.ai.behaviortrees.BTSequence;
 import ray.ai.behaviortrees.BehaviorTree;
 import ray.rml.Vector3;
+import ray.rml.Vector3f;
 
+import java.util.Random;
 import java.util.UUID;
 
-class NPCcontroller {
-    private NPC npc;
-    private GameAIServerUDP gameServer;
+public class NPCcontroller {
+    protected NPC npc;
+    protected GameAIServerUDP gameServer;
+    private Random randomNumber = new Random();
 
-    BehaviorTree behaviorTree = new BehaviorTree(BTCompositeType.SELECTOR);
+    protected BehaviorTree behaviorTree = new BehaviorTree(BTCompositeType.SELECTOR);
 
     long thinkStartTime;
     long tickStateTime;
@@ -23,25 +27,14 @@ class NPCcontroller {
 
 
 
-    public NPCcontroller(GameAIServerUDP gameServer) {
-        this.gameServer = gameServer;
+    public NPCcontroller() {
         start();
     }
 
     public void start() {
-        thinkStartTime = System.nanoTime();
-        tickStateTime = System.nanoTime();
-        currentTime = System.nanoTime();
-
-        lastThinkUpdate = thinkStartTime;
-        lastTickUpdate = tickStateTime;
-        lastUpdateTime = currentTime;
-        elapsedTime = currentTime - lastUpdateTime;
-
 
         setupNPCs();
         setupBehaviorTree();
-        npcLoop();
     }
 
     private void setupBehaviorTree() {
@@ -51,7 +44,6 @@ class NPCcontroller {
         behaviorTree.insert(1, new AttackPlayer(gameServer, npc));
         behaviorTree.insert(2, new PlayerPosition(gameServer, npc, false));
         behaviorTree.insert(2, new MoveTowardPlayer(gameServer, npc));
-
     }
 
 
@@ -68,7 +60,13 @@ class NPCcontroller {
     }
 
     public void setupNPCs() {
+        npc = new NPC();
+        npc.randomizeLocation(randomNumber.nextInt(50), randomNumber.nextInt(50));
 
+    }
+
+    public Vector3 getNPCLocation() {
+        return Vector3f.createFrom(npc.getX(), npc.getY(), npc.getZ());
     }
 
     public void checkPlayerProximity(UUID clientID, Vector3 playerPosition) {
@@ -80,53 +78,33 @@ class NPCcontroller {
         if (distanceToPlayer < 1) gameServer.sendDamagetoClient(clientID);
     }
 
-    public void npcLoop() {
-        while (true) {
-            currentTime = System.nanoTime();
-            elapsedTime = currentTime - lastUpdateTime;
-
-            float elapsedThinkTime = (currentTime - lastThinkUpdate) / 1000000.0f;
-            float elapsedTickTime = (currentTime - lastTickUpdate) / 1000000.0f;
-
-            if (elapsedTickTime >= 50.0f) {
-                lastTickUpdate = currentTime;
-                npc.updateLocation();
-                gameServer.sendNPCinfo();
-            }
-
-            if (elapsedThinkTime >= 500.0f) {
-                lastThinkUpdate = currentTime;
-                behaviorTree.update(elapsedTime);
-            }
-
-            lastUpdateTime = currentTime;
-            Thread.yield();
-        }
-    }
-
-
 
     public class NPC {
-        double locX, locY, locZ; // other state info goes here (FSM)
-        UUID target;
+        private float locX = 1;
+        private float locY = 1;
+        private float locZ = 10; // other state info goes here (FSM)
+
+        private Vector3 npcForwardAxis;
+        private UUID target = null;
 
         NPC() {
-
+            npcForwardAxis = Vector3f.createFrom(1, 0, 0);
         }
 
-        public double getX() {
+        public float getX() {
             return locX;
         }
 
-        public double getY() {
+        public float getY() {
             return locY;
         }
 
-        public double getZ() {
+        public float getZ() {
             return locZ;
         }
 
         public void updateLocation() {
+
 
         }
 
@@ -135,7 +113,16 @@ class NPCcontroller {
         }
 
         public void moveTowardTarget() {
-            gameServer.sendMoveTowardPlayer(target);
+            if (target != null)
+                gameServer.sendMoveTowardPlayer(target);
+        }
+
+        public void randomizeLocation(int x, int z) {
+            locX = x;
+            locY = 1;
+            locZ = z;
         }
     }
 }
+
+ */

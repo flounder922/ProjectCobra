@@ -8,10 +8,10 @@ import java.util.UUID;
 
 public class PlayerPosition extends BTCondition {
 
-    NPCcontroller.NPC npc;
+    GameAIServerUDP.NPCcontroller.NPC npc;
     GameAIServerUDP gameServer;
 
-    public PlayerPosition(GameAIServerUDP gameServer, NPCcontroller.NPC npc, boolean toNegate) {
+    public PlayerPosition(GameAIServerUDP gameServer, GameAIServerUDP.NPCcontroller.NPC npc, boolean toNegate) {
         super(toNegate);
         this.npc = npc;
         this.gameServer = gameServer;

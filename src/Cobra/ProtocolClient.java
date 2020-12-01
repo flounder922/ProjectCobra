@@ -287,9 +287,11 @@ public class ProtocolClient extends GameConnectionClient {
             entity = game.getEngine().getSceneManager().createEntity(String.valueOf(id), "dolphinHighPoly.obj");
             entity.setPrimitive(Renderable.Primitive.TRIANGLES);
 
-            node = game.getEngine().getSceneManager().getRootSceneNode().createChildSceneNode(String.valueOf(id));
+            node = game.getEngine().getSceneManager().getRootSceneNode().createChildSceneNode("1");
             node.attachObject(entity);
             node.setLocalPosition(position);
+
+            game.createNPCPhysicsObject(node);
         }
 
         public void setGhostNPCPosition(Vector3 position) {

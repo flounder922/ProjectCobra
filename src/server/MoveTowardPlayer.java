@@ -5,10 +5,10 @@ import ray.ai.behaviortrees.BTStatus;
 
 public class MoveTowardPlayer extends BTAction {
 
-    NPCcontroller.NPC npc;
+    GameAIServerUDP.NPCcontroller.NPC npc;
     GameAIServerUDP gameServer;
 
-    public MoveTowardPlayer(GameAIServerUDP gameServer, NPCcontroller.NPC npc) {
+    public MoveTowardPlayer(GameAIServerUDP gameServer, GameAIServerUDP.NPCcontroller.NPC npc) {
         this.gameServer = gameServer;
         this.npc = npc;
     }

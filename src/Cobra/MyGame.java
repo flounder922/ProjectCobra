@@ -15,7 +15,6 @@ import ray.physics.PhysicsObject;
 import ray.rage.Engine;
 import ray.rage.asset.texture.Texture;
 import ray.rage.asset.texture.TextureManager;
-import ray.rage.game.Game;
 import ray.rage.game.VariableFrameRateGame;
 import ray.rage.rendersystem.RenderSystem;
 import ray.rage.rendersystem.RenderWindow;
@@ -71,7 +70,6 @@ public class MyGame extends VariableFrameRateGame {
     Sound birdSound;
 
     boolean animationPlaying = false;
-
 
     // Variables for camera controller and movement of player avatar
     public Camera3PController orbitController1;
@@ -337,22 +335,21 @@ public class MyGame extends VariableFrameRateGame {
         positionalLightNode.attachObject(positionalLight);
         playerAvatarNode.attachChild(positionalLightNode);
 
-
-        // Setup the physics
-        initializePhysicsSystem();
-        createRagePhysicsWorld(engine);
+        // Setup the networking
+        setupNetworking();
 
 
         // Setup the inputs
         setupInputs(sceneManager);
 
 
-        // Setup the networking
-        setupNetworking();
+        // Setup the physics
+        initializePhysicsSystem();
+        createRagePhysicsWorld(engine);
+
 
         // Initialize audio
         initializeSound(sceneManager);
-
     }
 
     @Override
@@ -486,6 +483,7 @@ public class MyGame extends VariableFrameRateGame {
         SceneNode groundPlaneNode = engine.getSceneManager().getSceneNode("TessellationNode");
         SceneNode wallNode = engine.getSceneManager().getSceneNode("WallNode");
 
+
         // Holds the transform for the player avatar
         tempVariable = toDouble(playerAvatarNode.getLocalTransform().toFloatArray());
         float[] boxSize = {1f, 0.5f, 1f};
@@ -496,7 +494,7 @@ public class MyGame extends VariableFrameRateGame {
         playerAvatarPhysicsObject.setBounciness(0.0f);
         playerAvatarPhysicsObject.setFriction(0.2f);
         //playerAvatarPhysicsObject.setSleepThresholds(0.8f, 0.5f);
-        playerAvatarPhysicsObject.setDamping(0.2f, 0.2f);
+        playerAvatarPhysicsObject.setDamping(0.69f, 0.69f);
         playerAvatarNode.scale(0.1f, 0.1f, 0.1f);
 
         // Now holds the transform for the ground plane node
@@ -515,7 +513,25 @@ public class MyGame extends VariableFrameRateGame {
         wallPhysicsObject = physicsEngine.addBoxObject(physicsEngine.nextUID(),0, tempVariable, wallSize);
         wallNode.setPhysicsObject(wallPhysicsObject);
         wallNode.scale(0.5f, 0.5f, 0.5f);
+
+
     }
+
+    public void createNPCPhysicsObject(SceneNode npcNode) {
+        float mass = 4.0f;
+        float up[] = {0, 1, 0};
+        double[] tempVariable;
+
+        tempVariable = toDouble(npcNode.getLocalTransform().toFloatArray());
+        float[] ghostBox = {1.0f, 0.5f, 1.0f};
+        npcPhysicsObject = physicsEngine.addBoxObject(
+                physicsEngine.nextUID(), mass, tempVariable, ghostBox);
+
+        npcNode.setPhysicsObject(npcPhysicsObject);
+        npcPhysicsObject.setBounciness(0.0f);
+        npcPhysicsObject.setFriction(0.2f);
+    }
+
 
     private double[] toDouble(float[] floatArray) {
         if (floatArray == null)
