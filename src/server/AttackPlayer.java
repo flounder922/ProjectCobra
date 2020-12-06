@@ -9,9 +9,9 @@ import java.util.UUID;
 public class AttackPlayer extends BTAction {
 
     private final GameAIServerUDP gameServer;
-    private final GameAIServerUDP.NPCcontroller.NPC npc;
+    private final NPC npc;
 
-    public AttackPlayer(GameAIServerUDP gameServer, GameAIServerUDP.NPCcontroller.NPC npc) {
+    public AttackPlayer(GameAIServerUDP gameServer, NPC npc) {
         this.gameServer = gameServer;
         this.npc = npc;
     }

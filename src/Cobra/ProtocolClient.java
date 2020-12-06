@@ -144,10 +144,10 @@ public class ProtocolClient extends GameConnectionClient {
     }
 
     // format: (create, localId, x, y, z)
-    public void sendCreateMessage(Vector3 pos) {
+    public void sendCreateMessage(Vector3 position) {
         try {
             String message = "create," + id.toString();
-            message += "," + pos.x()+"," + pos.y() + "," + pos.z();
+            message += "," + position.x() + "," + position.y() + "," + position.z();
             sendPacket(message);
         } catch (IOException e) {
             e.printStackTrace();
@@ -170,15 +170,14 @@ public class ProtocolClient extends GameConnectionClient {
             ghostAvatars.clear();
             game.setIsConnected(false);
         }
-
     }
 
     // Send the details of local clients avatar
-    public void sendDetailsForMessage(UUID remId, Vector3 pos) {
+    public void sendDetailsForMessage(UUID remoteId, Vector3 position) {
         try {
             String message = "dsrf," + id.toString();
-            message += "," + remId;
-            message += "," + pos.x() + "," + pos.y() + "," + pos.z();
+            message += "," + remoteId.toString();
+            message += "," + position.x() + "," + position.y() + "," + position.z();
             sendPacket(message);
         } catch (IOException e) {
             e.printStackTrace();

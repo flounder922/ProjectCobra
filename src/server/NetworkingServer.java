@@ -5,10 +5,9 @@ import ray.networking.IGameConnection;
 import java.io.IOException;
 
 public class NetworkingServer {
-    private GameServerUDP thisUDPServer;
+    //private GameServerUDP thisUDPServer;
 
-    GameAIServerUDP udpServer;
-    public GameAIServerUDP.NPCcontroller npcController;
+    private GameAIServerUDP udpServer;
 
     long startTime;
     long lastUpdateTime;
@@ -27,7 +26,7 @@ public class NetworkingServer {
             }
             else {
                 //thisUDPServer = new GameServerUDP(serverPort, IGameConnection.ProtocolType.UDP);
-                udpServer = new GameAIServerUDP(serverPort, IGameConnection.ProtocolType.UDP);
+                udpServer = new GameAIServerFactory().GameServer(serverPort, IGameConnection.ProtocolType.UDP);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -39,6 +38,4 @@ public class NetworkingServer {
             NetworkingServer app = new NetworkingServer(Integer.parseInt(args[0]), args[1]);
         }
     }
-
-
 }

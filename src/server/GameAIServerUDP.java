@@ -1,8 +1,5 @@
 package server;
 
-import ray.ai.behaviortrees.BTCompositeType;
-import ray.ai.behaviortrees.BTSequence;
-import ray.ai.behaviortrees.BehaviorTree;
 import ray.networking.server.GameConnectionServer;
 import ray.networking.server.IClientInfo;
 import ray.rml.Vector3;
@@ -12,7 +9,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
 import java.util.UUID;
 
 public class GameAIServerUDP extends GameConnectionServer<UUID> {
@@ -22,7 +18,6 @@ public class GameAIServerUDP extends GameConnectionServer<UUID> {
 
     public GameAIServerUDP(int localPort, ProtocolType protocolType) throws IOException {
         super(localPort, protocolType);
-        npcController = new NPCcontroller();
     }
 
     @Override
@@ -86,7 +81,7 @@ public class GameAIServerUDP extends GameConnectionServer<UUID> {
         float z = location.z();
 
         try {
-                String message = "cnpc," + clientID.toString();
+                String message = "cnpc," + "1";
                 message += "," + x;
                 message += "," + y;
                 message += "," + z;
@@ -240,150 +235,4 @@ public class GameAIServerUDP extends GameConnectionServer<UUID> {
         }
     }
 
-    public class NPCcontroller {
-        protected NPC npc;
-        protected GameAIServerUDP gameServer;
-        private Random randomNumber = new Random();
-
-        protected BehaviorTree behaviorTree = new BehaviorTree(BTCompositeType.SELECTOR);
-
-        long thinkStartTime;
-        private long lastThinkUpdateTime;
-        long lastThinkUpdate;
-
-        private long tickStartTime;
-        long lastTickUpdate;
-        private long lastTickUpdateTime;
-
-        long currentTime;
-        long lastUpdateTime;
-        long elapsedTime;
-
-
-        public NPCcontroller() {
-            start();
-        }
-
-        public void start() {
-            thinkStartTime = System.nanoTime();
-            tickStartTime = System.nanoTime();
-            lastThinkUpdateTime = thinkStartTime;
-            lastTickUpdateTime = tickStartTime;
-
-            setupNPCs();
-            setupBehaviorTree();
-            npcLoop();
-        }
-
-        public void setupNPCs() {
-            npc = new NPC();
-            npc.randomizeLocation(randomNumber.nextInt(50), randomNumber.nextInt(50));
-        }
-
-        public void npcLoop() {
-            while (true) {
-                currentTime = System.nanoTime();
-                elapsedTime = currentTime - lastUpdateTime;
-
-                float elapsedThinkTime = (currentTime - lastThinkUpdate) / 1000000.0f;
-                float elapsedTickTime = (currentTime - lastTickUpdate) / 1000000.0f;
-
-                if (elapsedTickTime >= 50.0f) {
-                    lastTickUpdate = currentTime;
-                    npc.updateLocation();
-                    sendNPCinfo();
-                }
-
-                if (elapsedThinkTime >= 500.0f) {
-                    lastThinkUpdate = currentTime;
-                    behaviorTree.update(elapsedTime);
-                }
-
-                lastUpdateTime = currentTime;
-                Thread.yield();
-            }
-        }
-
-        private void setupBehaviorTree() {
-            behaviorTree.insertAtRoot(new BTSequence(1));
-            behaviorTree.insertAtRoot(new BTSequence(2));
-            behaviorTree.insert(1, new PlayerNear(gameServer, npc, false));
-            behaviorTree.insert(1, new AttackPlayer(gameServer, npc));
-            behaviorTree.insert(2, new PlayerPosition(gameServer, npc, false));
-            behaviorTree.insert(2, new MoveTowardPlayer(gameServer, npc));
-        }
-
-
-        public void updateNPCs() {
-
-        }
-
-        public GameAIServerUDP.NPCcontroller.NPC getNPC() {
-            return npc;
-        }
-
-        public int getNumberOfNPCs() {
-            return 1;
-        }
-
-
-
-        public Vector3 getNPCLocation() {
-            return Vector3f.createFrom(npc.getX(), npc.getY(), npc.getZ());
-        }
-
-        public void checkPlayerProximity(UUID clientID, Vector3 playerPosition) {
-            float distanceToPlayer =
-                    (float) Math.sqrt(Math.pow((npc.getX() - playerPosition.x()), 2) +
-                            Math.pow((npc.getY() - playerPosition.y()), 2) +
-                            Math.pow((npc.getZ() - playerPosition.z()), 2));
-
-            if (distanceToPlayer < 1) gameServer.sendDamagetoClient(clientID);
-        }
-
-
-        public class NPC {
-            private float locX = 1;
-            private float locY = 1;
-            private float locZ = 10; // other state info goes here (FSM)
-
-            private Vector3 npcForwardAxis;
-            private UUID target = null;
-
-            NPC() {
-                npcForwardAxis = Vector3f.createFrom(1, 0, 0);
-            }
-
-            public float getX() {
-                return locX;
-            }
-
-            public float getY() {
-                return locY;
-            }
-
-            public float getZ() {
-                return locZ;
-            }
-
-            public void updateLocation() {
-
-            }
-
-            public void setTarget(UUID target) {
-                this.target = target;
-            }
-
-            public void moveTowardTarget() {
-                if (target != null)
-                    gameServer.sendMoveTowardPlayer(target);
-            }
-
-            public void randomizeLocation(int x, int z) {
-                locX = x;
-                locY = 1;
-                locZ = z;
-            }
-        }
-    }
 }

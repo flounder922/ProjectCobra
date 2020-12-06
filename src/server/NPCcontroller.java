@@ -1,4 +1,3 @@
-/*
 package server;
 
 import ray.ai.behaviortrees.BTCompositeType;
@@ -11,6 +10,7 @@ import java.util.Random;
 import java.util.UUID;
 
 public class NPCcontroller {
+
     protected NPC npc;
     protected GameAIServerUDP gameServer;
     private Random randomNumber = new Random();
@@ -26,13 +26,12 @@ public class NPCcontroller {
     long lastUpdateTime;
 
 
-
-    public NPCcontroller() {
+    public NPCcontroller(GameAIServerUDP gameServer) {
+        this.gameServer = gameServer;
         start();
     }
 
     public void start() {
-
         setupNPCs();
         setupBehaviorTree();
     }
@@ -60,9 +59,8 @@ public class NPCcontroller {
     }
 
     public void setupNPCs() {
-        npc = new NPC();
+        npc = new NPC(gameServer);
         npc.randomizeLocation(randomNumber.nextInt(50), randomNumber.nextInt(50));
-
     }
 
     public Vector3 getNPCLocation() {
@@ -77,52 +75,4 @@ public class NPCcontroller {
 
         if (distanceToPlayer < 1) gameServer.sendDamagetoClient(clientID);
     }
-
-
-    public class NPC {
-        private float locX = 1;
-        private float locY = 1;
-        private float locZ = 10; // other state info goes here (FSM)
-
-        private Vector3 npcForwardAxis;
-        private UUID target = null;
-
-        NPC() {
-            npcForwardAxis = Vector3f.createFrom(1, 0, 0);
-        }
-
-        public float getX() {
-            return locX;
-        }
-
-        public float getY() {
-            return locY;
-        }
-
-        public float getZ() {
-            return locZ;
-        }
-
-        public void updateLocation() {
-
-
-        }
-
-        public void setTarget(UUID target) {
-            this.target = target;
-        }
-
-        public void moveTowardTarget() {
-            if (target != null)
-                gameServer.sendMoveTowardPlayer(target);
-        }
-
-        public void randomizeLocation(int x, int z) {
-            locX = x;
-            locY = 1;
-            locZ = z;
-        }
-    }
 }
-
- */

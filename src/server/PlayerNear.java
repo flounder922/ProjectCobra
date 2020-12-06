@@ -7,10 +7,10 @@ import java.util.UUID;
 
 public class PlayerNear extends BTCondition {
 
-    GameAIServerUDP.NPCcontroller.NPC npc;
+    NPC npc;
     GameAIServerUDP gameServer;
 
-    public PlayerNear(GameAIServerUDP gameServer, GameAIServerUDP.NPCcontroller.NPC npc, boolean toNegate) {
+    public PlayerNear(GameAIServerUDP gameServer, NPC npc, boolean toNegate) {
         super(toNegate);
         this.npc = npc;
         this.gameServer = gameServer;
