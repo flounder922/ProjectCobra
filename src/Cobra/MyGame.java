@@ -446,7 +446,6 @@ public class MyGame extends VariableFrameRateGame {
     }
 
     private void setupNetworking() {
-
         gameObjectsToRemove = new Vector<UUID>();
         isClientConnected = false;
 
@@ -509,7 +508,7 @@ public class MyGame extends VariableFrameRateGame {
 
 
         tempVariable = toDouble(wallNode.getLocalTransform().toFloatArray());
-        float[] wallSize = {3f, 3f, 0.5f};
+        float[] wallSize = {4f, 3f, 0.1f};
         wallPhysicsObject = physicsEngine.addBoxObject(physicsEngine.nextUID(),0, tempVariable, wallSize);
         wallNode.setPhysicsObject(wallPhysicsObject);
         wallNode.scale(0.5f, 0.5f, 0.5f);
@@ -654,13 +653,17 @@ public class MyGame extends VariableFrameRateGame {
 
     private void doClap() {
         SkeletalEntity playerAvatarEntity = (SkeletalEntity) getEngine().getSceneManager().getEntity("PlayerAvatar");
-        playerAvatarEntity.stopAnimation();
-        playerAvatarEntity.playAnimation("ClapAction", 0.5f, LOOP, 0);
+
+        if (!animationPlaying) {
+            playerAvatarEntity.stopAnimation();
+            playerAvatarEntity.playAnimation("ClapAction", 0.5f, LOOP, 0);
+        }
     }
 
     private void stopAnimation() {
         SkeletalEntity playerAvatarEntity = (SkeletalEntity) getEngine().getSceneManager().getEntity("PlayerAvatar");
         playerAvatarEntity.stopAnimation();
+        animationPlaying = false;
     }
 
     public void initializeSound(SceneManager sceneManager) {

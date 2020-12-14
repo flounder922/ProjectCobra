@@ -1,9 +1,14 @@
 package Cobra;
 
 import ray.networking.client.GameConnectionClient;
+import ray.rage.asset.texture.Texture;
 import ray.rage.rendersystem.Renderable;
+import ray.rage.rendersystem.states.RenderState;
+import ray.rage.rendersystem.states.TextureState;
 import ray.rage.scene.Entity;
+import ray.rage.scene.SceneManager;
 import ray.rage.scene.SceneNode;
+import ray.rage.scene.SkeletalEntity;
 import ray.rml.Vector3;
 import ray.rml.Vector3f;
 
@@ -248,7 +253,7 @@ public class ProtocolClient extends GameConnectionClient {
             node.setLocalPosition(ghostPosition);
         }
 
-        public Vector3 getGhostNPCPosition() {
+        public Vector3 getGhostPosition() {
             return node.getLocalPosition();
         }
 
@@ -270,7 +275,7 @@ public class ProtocolClient extends GameConnectionClient {
     public class GhostNPC {
         private int id;
         private SceneNode node;
-        private Entity entity;
+        private SkeletalEntity entity;
 
         public GhostNPC(int id, Vector3 position) {
             this.id = id;
@@ -283,11 +288,27 @@ public class ProtocolClient extends GameConnectionClient {
         }
 
         private void createGhostNPC(int id, Vector3 position) throws IOException {
-            entity = game.getEngine().getSceneManager().createEntity(String.valueOf(id), "dolphinHighPoly.obj");
-            entity.setPrimitive(Renderable.Primitive.TRIANGLES);
 
-            node = game.getEngine().getSceneManager().getRootSceneNode().createChildSceneNode("1");
+            SceneManager sceneManager = game.getEngine().getSceneManager();
+
+            // Create the skeletal entity
+            entity = sceneManager.createSkeletalEntity(String.valueOf(id), "Avatar.rkm", "Avatar.rks");
+
+            // Create and attach the texture to the skeletal entity
+            Texture NPCAvatarTexture = sceneManager.getTextureManager().getAssetByPath("zombie.jpg");
+            TextureState NPCAvatarTextureState = (TextureState) sceneManager.getRenderSystem().createRenderState(RenderState.Type.TEXTURE);
+
+            NPCAvatarTextureState.setTexture(NPCAvatarTexture);
+            entity.setRenderState(NPCAvatarTextureState);
+
+            // Attach the entity to a scene node
+            node = sceneManager.getRootSceneNode().createChildSceneNode("NPCAvatarNode");
             node.attachObject(entity);
+
+            // Load the animations
+            entity.loadAnimation("ClapAction", "Avatar_clap.rka");
+            entity.loadAnimation("WaveAction", "Avatar_wave.rka");
+
             node.setLocalPosition(position);
 
             game.createNPCPhysicsObject(node);
