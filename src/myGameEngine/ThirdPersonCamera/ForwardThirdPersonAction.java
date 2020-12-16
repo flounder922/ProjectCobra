@@ -25,7 +25,7 @@ public class ForwardThirdPersonAction extends AbstractInputAction {
         float xForce = actorNode.getLocalForwardAxis().x();
         float zForce = actorNode.getLocalForwardAxis().z();
 
-        actorNode.getPhysicsObject().applyForce(xForce * -15, 0, zForce * -15, 0, 0,0);
+        actorNode.getPhysicsObject().applyForce(xForce * -8, 0, zForce * -8, 0, 0,0);
 
         game.orbitController1.updateCameraPosition();
     }

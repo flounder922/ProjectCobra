@@ -163,7 +163,7 @@ public class MyGame extends VariableFrameRateGame {
             displayStringPlayerOne = "YOU WIN!!!!!";
             playerWon = true;
         } else {
-            displayStringPlayerOne = "Health: " + playerHealth + "  Coordinates: X: " + getPlayerPosition().x() + " Z: " + getPlayerPosition().z();
+            displayStringPlayerOne = "Health: " + playerHealth;
         }
 
         if (playerHealth <= 0) {
@@ -715,7 +715,7 @@ public class MyGame extends VariableFrameRateGame {
         groundPlaneNode.setPhysicsObject(groundPlanePhysicsObject);
         groundPlanePhysicsObject.setBounciness(0.0f);
         groundPlanePhysicsObject.setFriction(0.5f);
-        groundPlaneNode.scale(100.0f, 1.0f, 100.0f);
+        groundPlaneNode.scale(100.0f, 10.0f, 100.0f);
     }
 
     public void createNPCPhysicsObject(SceneNode npcNode) {
