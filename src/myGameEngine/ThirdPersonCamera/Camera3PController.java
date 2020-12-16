@@ -31,7 +31,7 @@ public class Camera3PController {
         this.cameraNode = cameraNode;
         this.target = target;
 
-        cameraAzimuth = 225.0f;
+        cameraAzimuth = 0.0f;
         cameraElevation = 20f;
         radias = 2.0f;
 
@@ -108,8 +108,8 @@ public class Camera3PController {
     public void increaseRadias(double v) {
         radias += v;
 
-        if(radias > 5)
-            radias = 5;
+        if(radias > 3)
+            radias = 3;
         else if (radias < 1)
             radias = 1;
         //radias = radias % 10;
@@ -127,9 +127,9 @@ public class Camera3PController {
             float rotationAmount;
 
             if (event.getValue() < -0.2f)
-                rotationAmount = -0.5f;
+                rotationAmount = -0.9f;
             else if (event.getValue() > 0.2f)
-                rotationAmount = 0.5f;
+                rotationAmount = 0.9f;
             else
                 rotationAmount = 0.0f;
 
@@ -153,8 +153,8 @@ public class Camera3PController {
                 rotationAmount = 0.0f;
 
             radias += rotationAmount;
-            if(radias > 5)
-                radias = 5;
+            if(radias > 3)
+                radias = 3;
             else if (radias < 1)
                 radias = 1;
             //radias = radias % 10;
@@ -192,7 +192,7 @@ public class Camera3PController {
             float rotationAmount;
 
             if (event.getValue() == 1)
-                rotationAmount = 0.5f;
+                rotationAmount = 0.9f;
             else
                 rotationAmount = 0.0f;
 
@@ -209,7 +209,7 @@ public class Camera3PController {
             float rotationAmount;
 
             if (event.getValue() == 1)
-                rotationAmount = -0.5f;
+                rotationAmount = -0.9f;
             else
                 rotationAmount = 0.0f;
 

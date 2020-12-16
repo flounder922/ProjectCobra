@@ -68,6 +68,7 @@ public class MyGame extends VariableFrameRateGame {
     private IAudioManager audioManager;
 
     Sound birdSound;
+    Sound zombieSound;
 
     boolean animationPlaying = false;
 
@@ -82,8 +83,20 @@ public class MyGame extends VariableFrameRateGame {
 
     // Physics related variables
     private PhysicsEngine physicsEngine;
-    private PhysicsObject playerAvatarPhysicsObject, groundPlanePhysicsObject, wallPhysicsObject1, npcPhysicsObject;
+    private PhysicsObject playerAvatarPhysicsObject, groundPlanePhysicsObject, npcPhysicsObject;
+    private PhysicsObject wallPhysicsObject1, wallPhysicsObject2, wallPhysicsObject3, wallPhysicsObject4, wallPhysicsObject5,
+            wallPhysicsObject6, wallPhysicsObject7, wallPhysicsObject8, wallPhysicsObject9, wallPhysicsObject10, wallPhysicsObject11,
+            wallPhysicsObject12, wallPhysicsObject13, wallPhysicsObject14, wallPhysicsObject15, wallPhysicsObject16, wallPhysicsObject17,
+            wallPhysicsObject18, wallPhysicsObject19, wallPhysicsObject20, wallPhysicsObject21, wallPhysicsObject22, wallPhysicsObject23,
+            wallPhysicsObject24, wallPhysicsObject25, wallPhysicsObject26, wallPhysicsObject27, wallPhysicsObject28, wallPhysicsObject29,
+            wallPhysicsObject30, wallPhysicsObject31, wallPhysicsObject32, wallPhysicsObject33, wallPhysicsObject34, wallPhysicsObject35,
+            wallPhysicsObject36, wallPhysicsObject37, wallPhysicsObject38, wallPhysicsObject39, wallPhysicsObject40, wallPhysicsObject41,
+            wallPhysicsObject42, wallPhysicsObject43, wallPhysicsObject44, wallPhysicsObject45, wallPhysicsObject46, wallPhysicsObject47,
+            wallPhysicsObject48, wallPhysicsObject49, wallPhysicsObject50, wallPhysicsObject51, wallPhysicsObject52, wallPhysicsObject53,
+            wallPhysicsObject54, wallPhysicsObject55;
+
     private int playerHealth = 10;
+    private boolean playerWon = false;
 
 
     public MyGame(String serverAddress, int serverPort) {
@@ -130,7 +143,10 @@ public class MyGame extends VariableFrameRateGame {
         elapsedTime += engine.getElapsedTimeMillis();
 
         SkeletalEntity playerAvatarEntity = (SkeletalEntity) engine.getSceneManager().getEntity("PlayerAvatar");
-        SceneNode wallNode = engine.getSceneManager().getSceneNode("WallNode1");
+        SceneNode wallNode1 = engine.getSceneManager().getSceneNode("WallNode1");
+        SceneNode wallNode52 = engine.getSceneManager().getSceneNode("WallNode52");
+        SceneNode wallNode17 = engine.getSceneManager().getSceneNode("WallNode17");
+        SceneNode wallNode39 = engine.getSceneManager().getSceneNode("WallNode39");
 
         Matrix4 matrix;
         physicsEngine.update(engine.getElapsedTimeMillis());
@@ -143,7 +159,17 @@ public class MyGame extends VariableFrameRateGame {
             }
         }
 
-        displayStringPlayerOne = "Health: " + playerHealth;
+        if (getPlayerPosition().x() - 41 > 0.5 && getPlayerPosition().z() - 43 > 0.5 || playerWon) {
+            displayStringPlayerOne = "YOU WIN!!!!!";
+            playerWon = true;
+        } else {
+            displayStringPlayerOne = "Health: " + playerHealth + "  Coordinates: X: " + getPlayerPosition().x() + " Z: " + getPlayerPosition().z();
+        }
+
+        if (playerHealth <= 0) {
+            SceneNode player = engine.getSceneManager().getSceneNode(PLAYER_AVATAR);
+            player.setLocalPosition(Vector3f.createFrom(0.0f, 1.0f, 0.0f));
+        }
 
         // Auto adjusting HUD
         renderSystem.setHUD(displayStringPlayerOne, renderSystem.getRenderWindow().getViewport(0).getActualLeft(),
@@ -155,7 +181,13 @@ public class MyGame extends VariableFrameRateGame {
         processNetworking(elapsedTime);
         playerAvatarEntity.update();
 
-        birdSound.setLocation(wallNode.getWorldPosition());
+        birdSound.setLocation(wallNode1.getWorldPosition());
+        Sound birdSound2 = birdSound;
+        birdSound2.setLocation(wallNode17.getWorldPosition());
+        Sound birdSound3 = birdSound;
+        birdSound3.setLocation(wallNode52.getWorldPosition());
+        Sound birdSound4 = birdSound;
+        birdSound4.setLocation(wallNode39.getWorldPosition());
         setEarParameters(getEngine().getSceneManager());
 
         if (isClientConnected)
@@ -279,12 +311,6 @@ public class MyGame extends VariableFrameRateGame {
         playerAvatarEntity.loadAnimation("ClapAction", "Avatar_clap.rka");
         playerAvatarEntity.loadAnimation("WaveAction", "Avatar_wave.rka");
 
-        //SceneNode dolphinNode = createSceneNode(sceneManager,
-               // PLAYER_AVATAR, "Avatar.obj", Vector3f.createFrom(-1.0f, 5.0f, -1.0f));
-
-
-
-        createMaze(sceneManager);
 
         // Sets up the camera
         setupOrbitCamera(engine, sceneManager);
@@ -317,7 +343,7 @@ public class MyGame extends VariableFrameRateGame {
 
         // Sets the terrain texture and sets the tiling
         tessellationEntity.setTexture(this.getEngine(), "grass.jpg");
-        tessellationEntity.setTextureTiling(75);
+        tessellationEntity.setTextureTiling(50);
         tessellationEntity.getTextureState().setWrapMode(TextureState.WrapMode.REPEAT);
 
 
@@ -339,6 +365,8 @@ public class MyGame extends VariableFrameRateGame {
                 sceneManager.getRootSceneNode().createChildSceneNode( "PositionalLightNode");
         positionalLightNode.attachObject(sceneManager.getLight("PositionalLight"));
         playerAvatarNode.attachChild(positionalLightNode);
+        positionalLightNode.rotate(Radianf.createFrom((float) Math.toRadians(180)), Vector3f.createFrom(0.0f, 1.0f, 0.0f));
+
 
         // Setup the networking
         setupNetworking();
@@ -352,6 +380,9 @@ public class MyGame extends VariableFrameRateGame {
         initializePhysicsSystem();
         createRagePhysicsWorld(engine);
 
+        // Handles the building of the maze.
+        createMaze(sceneManager);
+
 
         // Initialize audio
         initializeSound(sceneManager);
@@ -360,6 +391,7 @@ public class MyGame extends VariableFrameRateGame {
     private void createMaze(SceneManager sceneManager) throws IOException {
         SceneNode mazeNode = getEngine().getSceneManager().getRootSceneNode().createChildSceneNode("MazeNode");
 
+        // This is every wall node in the game used to build the maze...
         SceneNode wallNode1 = createSceneNode(sceneManager, "WallNode1", "Wall.obj", Vector3f.createFrom(1.0f, 0.0f, -3.0f));
         SceneNode wallNode2 = createSceneNode(sceneManager, "WallNode2", "Wall.obj", Vector3f.createFrom(10.0f, 0.0f, -3.0f));
         SceneNode wallNode3 = createSceneNode(sceneManager, "WallNode3", "Wall.obj", Vector3f.createFrom(-4.0f, 0.0f, 2.0f));
@@ -386,7 +418,7 @@ public class MyGame extends VariableFrameRateGame {
         wallNode12.rotate(Radianf.createFrom((float) Math.toRadians(90)), Vector3f.createFrom(0.0f, 1.0f, 0.0f));
         SceneNode wallNode13 = createSceneNode(sceneManager, "WallNode13", "Wall.obj", Vector3f.createFrom(-4.0f, 0.0f, 38.0f));
         wallNode13.rotate(Radianf.createFrom((float) Math.toRadians(90)), Vector3f.createFrom(0.0f, 1.0f, 0.0f));
-        SceneNode wallNode14 = createSceneNode(sceneManager, "WallNode14", "Wall.obj", Vector3f.createFrom(-4.0f, 0.0f, 47.0f));
+        SceneNode wallNode14 = createSceneNode(sceneManager, "WallNode14", "Wall.obj", Vector3f.createFrom(35.0f, 0.0f, 47.0f));
         wallNode14.rotate(Radianf.createFrom((float) Math.toRadians(90)), Vector3f.createFrom(0.0f, 1.0f, 0.0f));
 
         SceneNode wallNode15 = createSceneNode(sceneManager, "WallNode15", "Wall.obj", Vector3f.createFrom(1.0f, 0.0f, 11.0f));
@@ -404,8 +436,8 @@ public class MyGame extends VariableFrameRateGame {
         wallNode22.rotate(Radianf.createFrom((float) Math.toRadians(90)), Vector3f.createFrom(0.0f, 1.0f, 0.0f));
         SceneNode wallNode23 = createSceneNode(sceneManager, "WallNode23", "Wall.obj", Vector3f.createFrom(45.0f, 0.0f, 45.0f));
         wallNode23.rotate(Radianf.createFrom((float) Math.toRadians(90)), Vector3f.createFrom(0.0f, 1.0f, 0.0f));
-        SceneNode wallNode24 = createSceneNode(sceneManager, "WallNode24", "Wall.obj", Vector3f.createFrom(45.0f, 0.0f, 54.0f));
-        wallNode24.rotate(Radianf.createFrom((float) Math.toRadians(90)), Vector3f.createFrom(0.0f, 1.0f, 0.0f));
+        SceneNode wallNode24 = createSceneNode(sceneManager, "WallNode24", "Wall.obj", Vector3f.createFrom(40.0f, 0.0f, 50.0f));
+        //wallNode24.rotate(Radianf.createFrom((float) Math.toRadians(90)), Vector3f.createFrom(0.0f, 1.0f, 0.0f));
 
 
         SceneNode wallNode25 = createSceneNode(sceneManager, "WallNode25", "Wall.obj", Vector3f.createFrom(39.6f, 0.0f, 16.0f));
@@ -450,17 +482,85 @@ public class MyGame extends VariableFrameRateGame {
         SceneNode wallNode43 = createSceneNode(sceneManager, "WallNode43", "Wall.obj", Vector3f.createFrom(4.5f, 0.0f, 25.0f));
         SceneNode wallNode44 = createSceneNode(sceneManager, "WallNode44", "Wall.obj", Vector3f.createFrom(5.5f, 0.0f,  25.0f));
 
+        SceneNode wallNode45 = createSceneNode(sceneManager, "WallNode45", "Wall.obj", Vector3f.createFrom(14.5f, 0.0f,  34.0f));
+        SceneNode wallNode46 = createSceneNode(sceneManager, "WallNode46", "Wall.obj", Vector3f.createFrom(23.0f, 0.0f,  34.0f));
+        SceneNode wallNode47 = createSceneNode(sceneManager, "WallNode47", "Wall.obj", Vector3f.createFrom(32.0f, 0.0f,  34.0f));
+        SceneNode wallNode48 = createSceneNode(sceneManager, "WallNode48", "Wall.obj", Vector3f.createFrom(41.0f, 0.0f,  34.0f));
 
+        SceneNode wallNode49 = createSceneNode(sceneManager, "WallNode49", "Wall.obj", Vector3f.createFrom(1.0f, 0.0f, 30.0f));
+        SceneNode wallNode50 = createSceneNode(sceneManager, "WallNode50", "Wall.obj", Vector3f.createFrom(2.0f, 0.0f, 30.0f));
+
+        SceneNode wallNode51 = createSceneNode(sceneManager, "WallNode51", "Wall.obj", Vector3f.createFrom(1.0f, 0.0f, 42.0f));
+        SceneNode wallNode52 = createSceneNode(sceneManager, "WallNode52", "Wall.obj", Vector3f.createFrom(10.0f, 0.0f, 42.0f));
+        SceneNode wallNode53 = createSceneNode(sceneManager, "WallNode53", "Wall.obj", Vector3f.createFrom(19.0f, 0.0f, 42.0f));
+        SceneNode wallNode54 = createSceneNode(sceneManager, "WallNode54", "Wall.obj", Vector3f.createFrom(28.0f, 0.0f, 42.0f));
+        SceneNode wallNode55 = createSceneNode(sceneManager, "WallNode55", "Wall.obj", Vector3f.createFrom(37.0f, 0.0f, 42.0f));
+
+        // End of the wall creations.
 
 
 
 
         // Adding all the physics objects to the walls so they can be passed through.
-        //...
+        createWallPhysicsObject(wallNode1, wallPhysicsObject1);
+        createWallPhysicsObject(wallNode2, wallPhysicsObject2);
+        createWallPhysicsObject(wallNode3, wallPhysicsObject3);
+        createWallPhysicsObject(wallNode4, wallPhysicsObject4);
+        createWallPhysicsObject(wallNode5, wallPhysicsObject5);
+        createWallPhysicsObject(wallNode6, wallPhysicsObject6);
+        createWallPhysicsObject(wallNode7, wallPhysicsObject7);
+        createWallPhysicsObject(wallNode8, wallPhysicsObject8);
+        createWallPhysicsObject(wallNode9, wallPhysicsObject9);
+        createWallPhysicsObject(wallNode10, wallPhysicsObject10);
+        createWallPhysicsObject(wallNode11, wallPhysicsObject11);
+        createWallPhysicsObject(wallNode12, wallPhysicsObject12);
+        createWallPhysicsObject(wallNode13, wallPhysicsObject13);
+        createWallPhysicsObject(wallNode14, wallPhysicsObject14);
+        createWallPhysicsObject(wallNode15, wallPhysicsObject15);
+        createWallPhysicsObject(wallNode16, wallPhysicsObject16);
+        createWallPhysicsObject(wallNode17, wallPhysicsObject17);
+        createWallPhysicsObject(wallNode18, wallPhysicsObject18);
+        createWallPhysicsObject(wallNode19, wallPhysicsObject19);
+        createWallPhysicsObject(wallNode20, wallPhysicsObject20);
+        createWallPhysicsObject(wallNode21, wallPhysicsObject21);
+        createWallPhysicsObject(wallNode22, wallPhysicsObject22);
+        createWallPhysicsObject(wallNode23, wallPhysicsObject23);
+        createWallPhysicsObject(wallNode24, wallPhysicsObject24);
+        createWallPhysicsObject(wallNode25, wallPhysicsObject25);
+        createWallPhysicsObject(wallNode26, wallPhysicsObject26);
+        createWallPhysicsObject(wallNode27, wallPhysicsObject27);
+        createWallPhysicsObject(wallNode28, wallPhysicsObject28);
+        createWallPhysicsObject(wallNode29, wallPhysicsObject29);
+        createWallPhysicsObject(wallNode30, wallPhysicsObject30);
+        createWallPhysicsObject(wallNode31, wallPhysicsObject31);
+        createWallPhysicsObject(wallNode32, wallPhysicsObject32);
+        createWallPhysicsObject(wallNode33, wallPhysicsObject33);
+        createWallPhysicsObject(wallNode34, wallPhysicsObject34);
+        createWallPhysicsObject(wallNode35, wallPhysicsObject35);
+        createWallPhysicsObject(wallNode36, wallPhysicsObject36);
+        createWallPhysicsObject(wallNode37, wallPhysicsObject37);
+        createWallPhysicsObject(wallNode38, wallPhysicsObject38);
+        createWallPhysicsObject(wallNode39, wallPhysicsObject39);
+        createWallPhysicsObject(wallNode40, wallPhysicsObject40);
+        createWallPhysicsObject(wallNode41, wallPhysicsObject41);
+        createWallPhysicsObject(wallNode42, wallPhysicsObject42);
+        createWallPhysicsObject(wallNode43, wallPhysicsObject43);
+        createWallPhysicsObject(wallNode44, wallPhysicsObject44);
+        createWallPhysicsObject(wallNode45, wallPhysicsObject45);
+        createWallPhysicsObject(wallNode46, wallPhysicsObject46);
+        createWallPhysicsObject(wallNode47, wallPhysicsObject47);
+        createWallPhysicsObject(wallNode48, wallPhysicsObject48);
+        createWallPhysicsObject(wallNode49, wallPhysicsObject49);
+        createWallPhysicsObject(wallNode50, wallPhysicsObject50);
+        createWallPhysicsObject(wallNode51, wallPhysicsObject51);
+        createWallPhysicsObject(wallNode52, wallPhysicsObject52);
+        createWallPhysicsObject(wallNode53, wallPhysicsObject53);
+        createWallPhysicsObject(wallNode54, wallPhysicsObject54);
+        createWallPhysicsObject(wallNode55, wallPhysicsObject55);
 
 
         // Adding all the walls to the maze node to keep a hierarchy to move the maze around easily.
-        for (int i = 1; i < 26; ++i) {
+        for (int i = 1; i < 56; ++i) {
             mazeNode.attachChild(getEngine().getSceneManager().getSceneNode("WallNode" + i));
         }
     }
@@ -634,19 +734,23 @@ public class MyGame extends VariableFrameRateGame {
     }
 
     public void createWallPhysicsObject(SceneNode wallNode, PhysicsObject wallPhysicsObject) {
-        float mass = 4.0f;
-        float up[] = {0, 1, 0};
         double[] tempVariable;
 
-
-
         tempVariable = toDouble(wallNode.getLocalTransform().toFloatArray());
-        float[] wallSize = {4f, 3f, 0.1f};
-        wallPhysicsObject = physicsEngine.addBoxObject(physicsEngine.nextUID(),0, tempVariable, wallSize);
-        wallNode.setPhysicsObject(wallPhysicsObject);
-        wallNode.scale(0.5f, 0.5f, 0.5f);
+        float[] wallSize = {10f, 3f, 0.1f};
 
+        //System.out.println("Going to assign physics Box");
+        try {
+            wallPhysicsObject = physicsEngine.addBoxObject(physicsEngine.nextUID(),0, tempVariable, wallSize);
+
+        } catch (NullPointerException e) {
+            System.out.println(wallNode.getName() + ": " + e);
+        }
+        //System.out.println("Finished assigning physics Box");
+
+        //System.out.println("Attaching physics object to node");
         wallNode.setPhysicsObject(wallPhysicsObject);
+        //System.out.println("Finished attaching physics object to node");
     }
 
 
@@ -786,7 +890,7 @@ public class MyGame extends VariableFrameRateGame {
 
     public void initializeSound(SceneManager sceneManager) {
 
-        AudioResource resource;
+        AudioResource resource1, resource2;
         audioManager = AudioManagerFactory.createAudioManager("ray.audio.joal.JOALAudioManager");
 
         if (!audioManager.initialize()) {
@@ -794,14 +898,21 @@ public class MyGame extends VariableFrameRateGame {
             return;
         }
 
-        resource = audioManager.createAudioResource("birds.wav", AudioResourceType.AUDIO_STREAM);
+        resource1 = audioManager.createAudioResource("birds.wav", AudioResourceType.AUDIO_STREAM);
+        resource2 = audioManager.createAudioResource("zombie.wav", AudioResourceType.AUDIO_STREAM);
 
-        birdSound = new Sound(resource, SoundType.SOUND_EFFECT, 25, true);
+        birdSound = new Sound(resource1, SoundType.SOUND_EFFECT, 50, true);
+        zombieSound = new Sound(resource2, SoundType.SOUND_EFFECT, 70, true);
 
         birdSound.initialize(audioManager);
         birdSound.setMaxDistance(10.0f);
         birdSound.setMinDistance(0.5f);
         birdSound.setRollOff(3.0f);
+
+        zombieSound.initialize(audioManager);
+        zombieSound.setMaxDistance(15.0f);
+        zombieSound.setMinDistance(1.0f);
+        zombieSound.setRollOff(5.0f);
 
         SceneNode wallNode = sceneManager.getSceneNode("WallNode1");
 
@@ -821,7 +932,8 @@ public class MyGame extends VariableFrameRateGame {
     }
 
     public void takeDamage() {
-        playerHealth--;
+        if (!playerWon)
+            playerHealth--;
     }
 }
 

@@ -1,1 +1,1 @@
-java -Dsun.java2d.d3d=false -Dsun.java2d.uiScale=1 Cobra.MyGame 192.168.1.157 1234
+java -Dsun.java2d.d3d=false -Dsun.java2d.uiScale=1 Cobra.MyGame 127.0.0.1 1234

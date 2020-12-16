@@ -64,7 +64,14 @@ public class ProtocolClient extends GameConnectionClient {
                         Float.parseFloat(messageTokens[2]),
                         Float.parseFloat(messageTokens[3]),
                         Float.parseFloat(messageTokens[4]));
-                createGhostAvatar(ghostID, ghostPosition);
+                if (!checkAvatarsExistence(ghostID)) {
+                    try {
+                        createGhostAvatar(ghostID, ghostPosition);
+
+                    } catch (RuntimeException e) {
+                        System.out.println("Runtime Exception Creating ghost: " + e );
+                    }
+                }
             }
 
             if (messageTokens[0].compareTo("move") == 0) {
@@ -119,6 +126,15 @@ public class ProtocolClient extends GameConnectionClient {
                 sendNpcChange();
             }
         }
+    }
+
+    private boolean checkAvatarsExistence(UUID ghostID) {
+        for (int i = 0; i < ghostAvatars.size(); ++i) {
+            if (ghostID == ghostAvatars.get(i).getGhostId()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void sendNpcChange() {
@@ -216,7 +232,6 @@ public class ProtocolClient extends GameConnectionClient {
     }
 
     private void removeGhostAvatar(UUID ghostID) {
-
         for (int i = 0; i < ghostAvatars.size(); ++i) {
             if (ghostAvatars.get(i).id == ghostID) {
                 game.getEngine().getSceneManager().destroySceneNode(ghostID.toString());
@@ -228,7 +243,7 @@ public class ProtocolClient extends GameConnectionClient {
     private class GhostAvatar {
         private UUID id;
         private SceneNode node;
-        private Entity entity;
+        private SkeletalEntity entity;
 
         public GhostAvatar(UUID id, Vector3 position) {
             this.id = id;
@@ -241,11 +256,21 @@ public class ProtocolClient extends GameConnectionClient {
         }
 
         protected void createGhostAvatar(UUID ghostID, Vector3 ghostPosition) throws IOException {
-            entity = game.getEngine().getSceneManager().createEntity(String.valueOf(ghostID), "dolphinHighPoly.obj");
-            entity.setPrimitive(Renderable.Primitive.TRIANGLES);
+            SceneManager sceneManager = game.getEngine().getSceneManager();
 
-            node = game.getEngine().getSceneManager().getRootSceneNode().createChildSceneNode(id.toString());
+            // Create the skeletal entity
+            entity = sceneManager.createSkeletalEntity(String.valueOf(ghostID), "Avatar.rkm", "Avatar.rks");
+
+            // Create and attach the texture to the skeletal entity
+            Texture NPCAvatarTexture = sceneManager.getTextureManager().getAssetByPath("avatar_two.jpg");
+            TextureState NPCAvatarTextureState = (TextureState) sceneManager.getRenderSystem().createRenderState(RenderState.Type.TEXTURE);
+
+            NPCAvatarTextureState.setTexture(NPCAvatarTexture);
+            entity.setRenderState(NPCAvatarTextureState);
+
+            node = game.getEngine().getSceneManager().getRootSceneNode().createChildSceneNode(ghostID.toString());
             node.attachObject(entity);
+            node.scale(0.1f, 0.1f, 0.1f);
             node.setLocalPosition(ghostPosition);
         }
 
@@ -304,6 +329,7 @@ public class ProtocolClient extends GameConnectionClient {
             // Attach the entity to a scene node
             node = sceneManager.getRootSceneNode().createChildSceneNode("NPCAvatarNode");
             node.attachObject(entity);
+            node.scale(0.2f, 0.2f, 0.2f);
 
             // Load the animations
             entity.loadAnimation("ClapAction", "Avatar_clap.rka");
